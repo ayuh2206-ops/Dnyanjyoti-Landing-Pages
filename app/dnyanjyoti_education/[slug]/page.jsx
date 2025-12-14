@@ -8,36 +8,22 @@ import {
   Palette, Instagram, Facebook, FileText, Lock, Sparkles, Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-// Add missing Firebase imports for Canvas mode
-import { initializeApp } from 'firebase/app'; 
-import { onAuthStateChanged, signInAnonymously, getAuth } from 'firebase/auth';
+import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { 
   collection, doc, getDoc, setDoc, addDoc, onSnapshot, updateDoc, 
-  serverTimestamp, getFirestore 
+  serverTimestamp 
 } from 'firebase/firestore';
-
-// --- 1. PRODUCTION SETUP (Uncomment this block in VS Code) ---
-/*
 import { auth, db } from '@/lib/firebase';
-*/
 
-// --- 2. CANVAS/IMMERSIVE COMPATIBILITY MODE (Remove this block in VS Code) ---
-const firebaseConfig = JSON.parse(__firebase_config);
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-// ------------------------------------------------------------------
-
-const APP_ID = typeof __app_id !== 'undefined' ? __app_id : "dnyanjyoti-master";
+const APP_ID = "dnyanjyoti-master";
 const CLIENT_HANDLE = "dnyanjyoti_education";
 
-// --- EFFECTS CONFIG ---
 const EFFECTS = {
   none: '',
   pulse: 'animate-pulse',
   bounce: 'animate-bounce',
-  glow: 'shadow-[0_0_30px_-5px_rgba(255,107,0,0.6)] z-10', // Custom orange glow
-  shake: 'animate-pulse', // Simplified for Tailwind default
+  glow: 'shadow-[0_0_30px_-5px_rgba(255,107,0,0.6)] z-10',
+  shake: 'animate-pulse',
 };
 
 const THEMES = {
@@ -80,7 +66,6 @@ const NEW_PAGE_TEMPLATE = (slug) => ({
 });
 
 // --- HELPER: SMART TEXT PARSER ---
-// Syntax: [Text|Color]
 const SmartTextParser = ({ text, className }) => {
   if (!text) return null;
   const parts = text.split(/(\[.*?\|.*?\])/g);
@@ -88,24 +73,18 @@ const SmartTextParser = ({ text, className }) => {
     <div className={className}>
       {parts.map((part, i) => {
         const match = part.match(/^\[(.*?)\|(.*?)\]$/);
-        if (match) {
-          return <span key={i} style={{ color: match[2], fontWeight: 'bold' }}>{match[1]}</span>;
-        }
+        if (match) return <span key={i} style={{ color: match[2], fontWeight: 'bold' }}>{match[1]}</span>;
         return part;
       })}
     </div>
   );
 };
 
-// --- COMPONENT RENDERERS (With Effects) ---
-
+// --- COMPONENT RENDERERS ---
 const SmartTextBlock = ({ content, theme }) => (
   <section className={`py-12 px-6 ${theme.font}`} style={{ backgroundColor: content.customBgColor || 'transparent' }}>
     <div className={`max-w-4xl mx-auto ${EFFECTS[content.effect] || ''}`}>
-       <SmartTextParser 
-         text={content.text} 
-         className={`font-bold leading-tight ${content.alignment === 'center' ? 'text-center' : 'text-left'} ${content.fontSize || 'text-2xl'}`} 
-       />
+       <SmartTextParser text={content.text} className={`font-bold leading-tight ${content.alignment === 'center' ? 'text-center' : 'text-left'} ${content.fontSize || 'text-2xl'}`} />
     </div>
   </section>
 );
@@ -120,27 +99,9 @@ const HeroBlock = ({ content, theme, onAction }) => (
       <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-8 leading-tight">{content.headline}</h1>
       <p className="text-lg md:text-2xl text-slate-300 mb-10 max-w-3xl mx-auto leading-relaxed font-light">{content.subheadline}</p>
       <div className="flex flex-col sm:flex-row gap-5 justify-center items-center">
-        {/* Effect applied to Primary Button */}
         <button onClick={() => onAction('scroll-form')} className={`px-10 py-5 font-bold text-lg transition-all transform hover:-translate-y-1 flex items-center gap-3 text-white shadow-lg ${theme.radius} ${EFFECTS[content.effect] || ''}`} style={{ backgroundColor: theme.primary }}>{content.ctaText} <ChevronRight size={22} /></button>
         {content.ctaSecondary && <button className={`px-10 py-5 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-semibold text-lg transition-all flex items-center gap-3 backdrop-blur-sm ${theme.radius}`}><Download size={22} style={{ color: theme.primary }} /> {content.ctaSecondary}</button>}
       </div>
-    </div>
-  </section>
-);
-
-// (FeaturesBlock, CustomContentBlock, BioBlock omitted for brevity but assume they exist and are standard)
-// I will include FormBlock as it's a key conversion point often needing effects
-const FormBlock = ({ content, theme, onSubmit }) => (
-  <section id="registration-form" className={`py-20 px-6 bg-white ${theme.font}`}>
-    <div className={`max-w-lg mx-auto bg-white shadow-2xl p-8 border border-slate-100 ${theme.radius} ${EFFECTS[content.effect] || ''}`}>
-      <h2 className="text-2xl font-bold text-center mb-6" style={{ color: theme.secondary }}>{content.title}</h2>
-      <p className="text-center text-sm text-slate-500 mb-6">{content.subtitle}</p>
-      <form onSubmit={onSubmit} className="space-y-4">
-        <input required name="name" placeholder="Full Name" className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:ring-2 outline-none transition-all ${theme.radius}`} style={{ '--tw-ring-color': theme.primary }} />
-        <input required name="phone" placeholder="WhatsApp Number" className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:ring-2 outline-none transition-all ${theme.radius}`} style={{ '--tw-ring-color': theme.primary }} />
-        <input required name="email" type="email" placeholder="Email Address" className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:ring-2 outline-none transition-all ${theme.radius}`} style={{ '--tw-ring-color': theme.primary }} />
-        <button type="submit" className={`w-full py-4 text-white font-bold text-lg shadow-lg transition-all flex items-center justify-center gap-2 mt-2 ${theme.radius}`} style={{ backgroundColor: theme.primary }}>{content.btnText} <ChevronRight size={20} /></button>
-      </form>
     </div>
   </section>
 );
@@ -196,6 +157,21 @@ const BioBlock = ({ content, theme }) => (
         </div>
       </div>
     </section>
+);
+
+const FormBlock = ({ content, theme, onSubmit }) => (
+  <section id="registration-form" className={`py-20 px-6 bg-white ${theme.font}`}>
+    <div className={`max-w-lg mx-auto bg-white shadow-2xl p-8 border border-slate-100 ${theme.radius} ${EFFECTS[content.effect] || ''}`}>
+      <h2 className="text-2xl font-bold text-center mb-6" style={{ color: theme.secondary }}>{content.title}</h2>
+      <p className="text-center text-sm text-slate-500 mb-6">{content.subtitle}</p>
+      <form onSubmit={onSubmit} className="space-y-4">
+        <input required name="name" placeholder="Full Name" className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:ring-2 outline-none transition-all ${theme.radius}`} style={{ '--tw-ring-color': theme.primary }} />
+        <input required name="phone" placeholder="WhatsApp Number" className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:ring-2 outline-none transition-all ${theme.radius}`} style={{ '--tw-ring-color': theme.primary }} />
+        <input required name="email" type="email" placeholder="Email Address" className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:ring-2 outline-none transition-all ${theme.radius}`} style={{ '--tw-ring-color': theme.primary }} />
+        <button type="submit" className={`w-full py-4 text-white font-bold text-lg shadow-lg transition-all flex items-center justify-center gap-2 mt-2 ${theme.radius}`} style={{ backgroundColor: theme.primary }}>{content.btnText} <ChevronRight size={20} /></button>
+      </form>
+    </div>
+  </section>
 );
 
 export default function Page({ params }) {
@@ -311,7 +287,6 @@ const AdminWorkspace = ({ page, onUpdate, onClose, onReImport }) => {
   const [showBlockPicker, setShowBlockPicker] = useState(false);
   const [expandedSection, setExpandedSection] = useState(null);
   
-  // Helpers
   const updateContent = (sid, f, v) => onUpdate({ ...page, sections: page.sections.map(s => s.id === sid ? { ...s, content: { ...s.content, [f]: v } } : s) });
   const updateThankYou = (f, v) => onUpdate({ ...page, thankYou: { ...page.thankYou, [f]: v } });
   const updateTheme = (f, v) => onUpdate({ ...page, theme: { ...page.theme, [f]: v } });
@@ -354,7 +329,7 @@ const AdminWorkspace = ({ page, onUpdate, onClose, onReImport }) => {
                     </div>
                     {expandedSection === s.id && (
                       <div className="space-y-2 mt-2 pt-2 border-t border-slate-700">
-                        {/* Effect Selector for ALL blocks */}
+                        {/* Effect Selector */}
                         <div>
                            <label className="text-[10px] text-blue-400 uppercase font-bold flex items-center gap-1"><Zap size={10}/> Visual Effect</label>
                            <select value={s.content.effect || 'none'} onChange={(e) => updateContent(s.id, 'effect', e.target.value)} className="w-full bg-slate-950 text-xs border border-slate-600 rounded p-1">
@@ -365,13 +340,12 @@ const AdminWorkspace = ({ page, onUpdate, onClose, onReImport }) => {
                               <option value="shake">Shake (Urgent)</option>
                            </select>
                         </div>
-                        {/* Fields */}
                         {Object.keys(s.content).map(k => {
                            if(typeof s.content[k] !== 'string' || k === 'effect') return null;
                            return (
                              <div key={k}>
                                <label className="text-[10px] text-slate-500 uppercase">{k}</label>
-                               <input value={s.content[k]} onChange={e => updateContent(s.id, k, e.target.value)} className="w-full bg-slate-900 p-1 mb-1 text-xs rounded border border-slate-700" placeholder={k} />
+                               <input value={s.content[k]} onChange={e => updateContent(s.id, k, e.target.value)} className="w-full bg-slate-950 p-1 mb-1 text-xs rounded border border-slate-700" placeholder={k} />
                                {k === 'text' && s.type === 'smart_text' && <p className="text-[9px] text-slate-500">Use [Text|Color] for highlighting. Ex: [Free|red]</p>}
                              </div>
                            )
