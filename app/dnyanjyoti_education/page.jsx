@@ -8,27 +8,14 @@ import {
   Palette, Instagram, Facebook, FileText, Lock, Sparkles, Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-// Add missing Firebase imports for Canvas mode
-import { initializeApp } from 'firebase/app';
-import { onAuthStateChanged, signInAnonymously, getAuth } from 'firebase/auth';
+import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { 
   collection, doc, getDoc, setDoc, addDoc, onSnapshot, updateDoc, 
-  serverTimestamp, getFirestore 
+  serverTimestamp 
 } from 'firebase/firestore';
-
-// --- 1. PRODUCTION SETUP (Uncomment this block in VS Code) ---
-
 import { auth, db } from '@/lib/firebase';
 
-
-// --- 2. CANVAS/IMMERSIVE COMPATIBILITY MODE (Remove this block in VS Code) ---
-const firebaseConfig = JSON.parse(__firebase_config);
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-// ------------------------------------------------------------------
-
-const APP_ID = typeof __app_id !== 'undefined' ? __app_id : "dnyanjyoti-master";
+const APP_ID = "dnyanjyoti-master";
 const CLIENT_HANDLE = "dnyanjyoti_education";
 
 const EFFECTS = {
