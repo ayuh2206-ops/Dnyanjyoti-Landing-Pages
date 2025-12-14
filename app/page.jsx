@@ -6,12 +6,26 @@ import {
   Users, BarChart3, Lock, LogOut, Globe, ArrowRight, ShieldCheck, Key
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
+// Add missing Firebase imports for Canvas mode
+import { initializeApp } from 'firebase/app';
+import { onAuthStateChanged, signInAnonymously, getAuth } from 'firebase/auth';
 import { 
-  collection, doc, getDocs, getDoc, setDoc, deleteDoc
+  collection, doc, getDocs, getDoc, setDoc, deleteDoc, getFirestore
 } from 'firebase/firestore';
+
+// --- 1. PRODUCTION SETUP (Uncomment this block in VS Code) ---
+
 import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
+
+
+// --- 2. CANVAS/IMMERSIVE COMPATIBILITY MODE (Remove this block in VS Code) ---
+const useRouter = () => ({ push: (url) => console.log("Navigate to:", url) });
+const firebaseConfig = JSON.parse(__firebase_config);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+// ------------------------------------------------------------------
 
 const APP_ID = "dnyanjyoti-master";
 const CLIENT_HANDLE = "dnyanjyoti_education";
