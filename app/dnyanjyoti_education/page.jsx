@@ -2,16 +2,29 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Layout, Plus, Settings, Edit3, Trash2, 
+  Layout, Plus, Settings, Edit3, Trash2, Copy,
   Users, BarChart3, Lock, LogOut, Globe, ArrowRight, ShieldCheck, Key
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
+import { onAuthStateChanged, signInAnonymously, getAuth } from 'firebase/auth';
 import { 
-  collection, doc, getDocs, getDoc, setDoc, deleteDoc
+  collection, doc, getDocs, getDoc, setDoc, deleteDoc, getFirestore
 } from 'firebase/firestore';
+import { initializeApp } from 'firebase/app';
+
+// --- PRODUCTION SETUP (Uncomment in VS Code) ---
+/*
 import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
+*/
+
+// --- CANVAS COMPATIBILITY MODE (Delete in VS Code) ---
+const useRouter = () => ({ push: (url) => console.log("Navigate to:", url) });
+const firebaseConfig = JSON.parse(__firebase_config);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+// ---------------------------------------------------
 
 const APP_ID = "dnyanjyoti-master";
 const CLIENT_HANDLE = "dnyanjyoti_education";
@@ -92,6 +105,32 @@ export default function VeroDashboard() {
     }
   };
 
+  const handleClonePage = async (sourcePage) => {
+    const newSlugRaw = prompt(`Duplicate "${sourcePage.id}" to new slug (e.g. ${sourcePage.id}-marathi):`);
+    if (!newSlugRaw) return;
+    const newSlug = newSlugRaw.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+
+    if (pages.find(p => p.id === newSlug)) {
+        alert("A page with this name already exists.");
+        return;
+    }
+
+    try {
+        // Create exact copy with new ID and Date
+        const newPageData = {
+            ...sourcePage,
+            id: newSlug,
+            createdAt: new Date().toISOString(),
+            status: 'draft' // Reset to draft for safety
+        };
+        await setDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'pages', newSlug), newPageData);
+        alert(`Success! Cloned to /${newSlug}`);
+        fetchDashboardData();
+    } catch (err) {
+        alert("Clone failed: " + err.message);
+    }
+  };
+
   const handleDeletePage = async (pageId) => {
     if(!confirm(`Delete ${pageId}?`)) return;
     await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'pages', pageId));
@@ -135,7 +174,14 @@ export default function VeroDashboard() {
          pages.length === 0 ? <EmptyState onCreate={handleCreatePage} /> :
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {pages.map(page => (
-              <PageCard key={page.id} page={page} leads={leadCounts[page.id] || 0} onDelete={() => handleDeletePage(page.id)} clientHandle={CLIENT_HANDLE} />
+              <PageCard 
+                key={page.id} 
+                page={page} 
+                leads={leadCounts[page.id] || 0} 
+                onDelete={() => handleDeletePage(page.id)}
+                onClone={() => handleClonePage(page)}
+                clientHandle={CLIENT_HANDLE} 
+              />
             ))}
          </div>
         }
@@ -211,13 +257,16 @@ const StatCard = ({ icon, label, value, sub }) => (
   </div>
 );
 
-const PageCard = ({ page, leads, onDelete, clientHandle }) => {
+const PageCard = ({ page, leads, onDelete, onClone, clientHandle }) => {
   const router = useRouter();
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex flex-col">
       <div className="p-6 pb-4 border-b border-slate-800/50 flex justify-between items-start">
         <div><h3 className="font-bold text-lg text-white mb-1">{page.id}</h3><div className="flex items-center gap-2 text-xs text-slate-500"><span className={`w-2 h-2 rounded-full ${page.status === 'published' ? 'bg-green-500' : 'bg-yellow-500'}`}></span><span className="capitalize">{page.status || 'Draft'}</span></div></div>
-        <button onClick={onDelete} className="text-slate-600 hover:text-red-500 transition-colors p-2"><Trash2 size={16} /></button>
+        <div className="flex gap-1">
+            <button onClick={onClone} className="text-slate-500 hover:text-blue-400 transition-colors p-2" title="Duplicate Page"><Copy size={16}/></button>
+            <button onClick={onDelete} className="text-slate-500 hover:text-red-500 transition-colors p-2" title="Delete Page"><Trash2 size={16}/></button>
+        </div>
       </div>
       <div className="px-6 py-4 bg-slate-950/30 flex items-center gap-4">
         <div className="flex-1"><p className="text-[10px] text-slate-500 uppercase font-bold">Leads</p><p className="text-xl font-bold text-white">{leads}</p></div>
