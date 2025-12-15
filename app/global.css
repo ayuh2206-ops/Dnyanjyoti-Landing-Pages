@@ -2,18 +2,80 @@
 @tailwind components;
 @tailwind utilities;
 
-.scrollbar-thin::-webkit-scrollbar { width: 6px; }
-.scrollbar-thin::-webkit-scrollbar-track { background: #0f172a; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background-color: #334155; border-radius: 20px; }
-
-/* Shake Animation */
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
-  20%, 40%, 60%, 80% { transform: translateX(10px); }
+.scrollbar-thin::-webkit-scrollbar { 
+  width: 6px; 
 }
 
-.animate-shake {
-  animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
-  animation-iteration-count: infinite;
+.scrollbar-thin::-webkit-scrollbar-track { 
+  background: #0f172a; 
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb { 
+  background-color: #334155; 
+  border-radius: 20px; 
+}
+
+/* ============================================
+   REFINED ELEGANT ANIMATIONS
+   ============================================ */
+
+/* Pulse - Subtle heartbeat (3s, smooth) */
+@keyframes pulse-elegant {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+.animate-pulse-elegant {
+  animation: pulse-elegant 3s ease-in-out infinite;
+}
+
+/* Bounce - Elegant up/down (2s, smoother) */
+@keyframes bounce-elegant {
+  0%, 100% { 
+    transform: translateY(0);
+  }
+  50% { 
+    transform: translateY(-10px);
+  }
+}
+
+.animate-bounce-elegant {
+  animation: bounce-elegant 2s ease-in-out infinite;
+}
+
+/* Glow - Customizable via inline styles */
+@keyframes glow-elegant {
+  0%, 100% { 
+    filter: brightness(1);
+  }
+  50% { 
+    filter: brightness(1.2);
+  }
+}
+
+.animate-glow-elegant {
+  animation: glow-elegant 2s ease-in-out infinite;
+}
+
+/* Shake - Refined (3s, gentle rotation, no harsh movement) */
+@keyframes shake-elegant {
+  0%, 100% { 
+    transform: translateX(0) rotate(0deg);
+  }
+  10%, 30%, 50%, 70%, 90% { 
+    transform: translateX(-2px) rotate(-1deg);
+  }
+  20%, 40%, 60%, 80% { 
+    transform: translateX(2px) rotate(1deg);
+  }
+}
+
+.animate-shake-elegant {
+  animation: shake-elegant 3s ease-in-out infinite;
 }
