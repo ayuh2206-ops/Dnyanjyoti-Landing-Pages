@@ -5,7 +5,7 @@ import {
   ChevronRight, Star, X, Edit3, Plus, Trash2, 
   Instagram, Send, MessageCircle, Facebook,
   ChevronUp, ChevronDown, GripVertical,
-  Type, Image as ImageIcon, Award, User, FileText, Mail
+  Type, Image as ImageIcon, Award, User, FileText, Mail, Globe, Tag
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
@@ -14,8 +14,33 @@ import { auth, db } from '@/lib/firebase';
 
 const APP_ID = "dnyanjyoti-master";
 
+// Helper function to parse Smart Text with [Text|color] syntax
+const parseSmartText = (text) => {
+  const regex = /\[([^\]]+)\|([^\]]+)\]/g;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ text: text.slice(lastIndex, match.index), highlight: false });
+    }
+    parts.push({ text: match[1], highlight: true, color: match[2] });
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push({ text: text.slice(lastIndex), highlight: false });
+  }
+
+  return parts.length > 0 ? parts : [{ text, highlight: false }];
+};
+
 const HeroSection = ({ section, theme }) => (
-  <section className="relative overflow-hidden pt-24 pb-32 px-6" style={{ backgroundColor: section.bgColor || theme.secondary, color: 'white' }}>
+  <section 
+    className={`relative overflow-hidden pt-24 pb-32 px-6 ${section.effect ? getEffectClass(section.effect) : ''}`}
+    style={{ backgroundColor: section.bgColor || theme.secondary, color: 'white' }}
+  >
     <div className="max-w-5xl mx-auto text-center">
       <div className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full font-bold text-xs mb-8 border" style={{ backgroundColor: `${theme.primary}20`, color: theme.primary, borderColor: theme.primary }}>
         <span className="relative flex h-2 w-2">
@@ -36,43 +61,73 @@ const HeroSection = ({ section, theme }) => (
 );
 
 const SmartTextSection = ({ section, theme }) => (
-  <section className="py-20 px-6" style={{ backgroundColor: section.bgColor || theme.bg }}>
+  <section 
+    className={`py-20 px-6 ${section.effect ? getEffectClass(section.effect) : ''}`}
+    style={{ backgroundColor: section.bgColor || theme.bg }}
+  >
     <div className="max-w-4xl mx-auto">
       <h2 className="text-3xl md:text-5xl font-bold text-center mb-6" style={{ color: theme.secondary }}>
         {section.content.title || 'Smart Text Title'}
       </h2>
       <div className="text-lg text-slate-700 leading-relaxed space-y-4">
         {(section.content.paragraphs || ['Add your text here...']).map((para, i) => (
-          <p key={i}>{para}</p>
+          <p key={i}>
+            {parseSmartText(para).map((part, idx) => 
+              part.highlight ? (
+                <strong key={idx} style={{ color: part.color, fontWeight: 'bold' }}>
+                  {part.text}
+                </strong>
+              ) : (
+                <span key={idx}>{part.text}</span>
+              )
+            )}
+          </p>
         ))}
       </div>
     </div>
   </section>
 );
 
-const ContentSection = ({ section, theme }) => (
-  <section className="py-20 px-6" style={{ backgroundColor: section.bgColor || theme.bg }}>
-    <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-      <div className={`${theme.radius} overflow-hidden bg-slate-200 aspect-video flex items-center justify-center`}>
-        <ImageIcon size={64} className="text-slate-400" />
+const ContentSection = ({ section, theme }) => {
+  const imagePosition = section.content.imagePosition || 'left';
+  const showImage = section.content.showImage !== false;
+  
+  return (
+    <section 
+      className={`py-20 px-6 ${section.effect ? getEffectClass(section.effect) : ''}`}
+      style={{ backgroundColor: section.bgColor || theme.bg }}
+    >
+      <div className={`max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center ${imagePosition === 'right' ? 'md:grid-flow-dense' : ''}`}>
+        {showImage && (
+          <div className={`${theme.radius} overflow-hidden bg-slate-200 aspect-video flex items-center justify-center ${imagePosition === 'right' ? 'md:col-start-2' : ''}`}>
+            {section.content.imageUrl ? (
+              <img src={section.content.imageUrl} alt={section.content.title || 'Content'} className="w-full h-full object-cover" />
+            ) : (
+              <ImageIcon size={64} className="text-slate-400" />
+            )}
+          </div>
+        )}
+        <div className={imagePosition === 'right' ? 'md:col-start-1' : ''}>
+          <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: theme.secondary }}>
+            {section.content.title || 'Content Title'}
+          </h2>
+          <p className="text-lg text-slate-700 mb-6">
+            {section.content.description || 'Add your content description here...'}
+          </p>
+          <button className={`px-8 py-3 font-bold text-white ${theme.radius}`} style={{ backgroundColor: theme.primary }}>
+            {section.content.btnText || 'Learn More'}
+          </button>
+        </div>
       </div>
-      <div>
-        <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: theme.secondary }}>
-          {section.content.title || 'Content Title'}
-        </h2>
-        <p className="text-lg text-slate-700 mb-6">
-          {section.content.description || 'Add your content description here...'}
-        </p>
-        <button className={`px-8 py-3 font-bold text-white ${theme.radius}`} style={{ backgroundColor: theme.primary }}>
-          {section.content.btnText || 'Learn More'}
-        </button>
-      </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 const FeaturesSection = ({ section, theme }) => (
-  <section className="py-20 px-6" style={{ backgroundColor: section.bgColor || theme.bg }}>
+  <section 
+    className={`py-20 px-6 ${section.effect ? getEffectClass(section.effect) : ''}`}
+    style={{ backgroundColor: section.bgColor || theme.bg }}
+  >
     <div className="max-w-6xl mx-auto">
       <h2 className="text-3xl md:text-5xl font-bold text-center mb-4" style={{ color: theme.secondary }}>
         {section.content.title || 'Features'}
@@ -96,10 +151,17 @@ const FeaturesSection = ({ section, theme }) => (
 );
 
 const BioSection = ({ section, theme }) => (
-  <section className="py-20 px-6" style={{ backgroundColor: section.bgColor || theme.bg }}>
+  <section 
+    className={`py-20 px-6 ${section.effect ? getEffectClass(section.effect) : ''}`}
+    style={{ backgroundColor: section.bgColor || theme.bg }}
+  >
     <div className="max-w-4xl mx-auto text-center">
-      <div className="w-32 h-32 rounded-full mx-auto mb-6 bg-slate-200 flex items-center justify-center">
-        <User size={64} className="text-slate-400" />
+      <div className="w-32 h-32 rounded-full mx-auto mb-6 bg-slate-200 flex items-center justify-center overflow-hidden">
+        {section.content.imageUrl ? (
+          <img src={section.content.imageUrl} alt={section.content.name || 'Bio'} className="w-full h-full object-cover" />
+        ) : (
+          <User size={64} className="text-slate-400" />
+        )}
       </div>
       <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: theme.secondary }}>
         {section.content.name || 'Your Name'}
@@ -113,7 +175,11 @@ const BioSection = ({ section, theme }) => (
 );
 
 const FormSection = ({ section, theme, onSubmit }) => (
-  <section id="form" className="py-20 px-6" style={{ backgroundColor: section.bgColor || theme.bg }}>
+  <section 
+    id="form" 
+    className={`py-20 px-6 ${section.effect ? getEffectClass(section.effect) : ''}`}
+    style={{ backgroundColor: section.bgColor || theme.bg }}
+  >
     <div className={`max-w-lg mx-auto bg-white shadow-2xl p-8 ${theme.radius}`}>
       <h2 className="text-3xl font-bold text-center mb-3" style={{ color: theme.secondary }}>
         {section.content.title || 'Register Now'}
@@ -131,8 +197,25 @@ const FormSection = ({ section, theme, onSubmit }) => (
   </section>
 );
 
+const getEffectClass = (effect) => {
+  const effects = {
+    pulse: 'animate-pulse',
+    bounce: 'animate-bounce',
+    glow: 'shadow-[0_0_30px_rgba(255,107,0,0.5)]',
+    shake: 'animate-shake'
+  };
+  return effects[effect] || '';
+};
+
 const RenderSection = ({ section, theme, onSubmit }) => {
-  const components = { hero: HeroSection, smarttext: SmartTextSection, content: ContentSection, features: FeaturesSection, bio: BioSection, form: FormSection };
+  const components = { 
+    hero: HeroSection, 
+    smarttext: SmartTextSection, 
+    content: ContentSection, 
+    features: FeaturesSection, 
+    bio: BioSection, 
+    form: FormSection 
+  };
   const Component = components[section.type];
   return Component ? <Component section={section} theme={theme} onSubmit={onSubmit} /> : null;
 };
@@ -227,7 +310,11 @@ export default function Page({ params }) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
     try {
-      await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'leads'), { ...data, source_page: currentSlug, timestamp: serverTimestamp() });
+      await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'leads'), { 
+        ...data, 
+        source_page: currentSlug, 
+        timestamp: serverTimestamp() 
+      });
       setViewState('thankyou');
     } catch (err) {
       console.error('Submit error:', err);
@@ -288,12 +375,58 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
   const [showAddMenu, setShowAddMenu] = useState(false);
 
   const SECTION_TEMPLATES = {
-    hero: { type: 'hero', bgColor: '#001124', content: { tag: 'NEW', headline: 'Headline', subheadline: 'Subtitle', ctaText: 'Get Started' } },
-    smarttext: { type: 'smarttext', bgColor: '#F8FAFC', content: { title: 'Smart Text', paragraphs: ['Your text here...'] } },
-    content: { type: 'content', bgColor: '#FFFFFF', content: { title: 'Content Title', description: 'Description...', btnText: 'Learn More' } },
-    features: { type: 'features', bgColor: '#F8FAFC', content: { title: 'Features', subtitle: 'What we offer', feature1Title: 'Feature 1', feature1Text: 'Description', feature2Title: 'Feature 2', feature2Text: 'Description', feature3Title: 'Feature 3', feature3Text: 'Description' } },
-    bio: { type: 'bio', bgColor: '#FFFFFF', content: { name: 'Your Name', title: 'Your Title', bio: 'Bio...' } },
-    form: { type: 'form', bgColor: '#F8FAFC', content: { title: 'Register', subtitle: 'Fill form', btnText: 'Submit' } },
+    hero: { 
+      type: 'hero', 
+      bgColor: '#001124', 
+      effect: null,
+      content: { tag: 'NEW', headline: 'Headline', subheadline: 'Subtitle', ctaText: 'Get Started' } 
+    },
+    smarttext: { 
+      type: 'smarttext', 
+      bgColor: '#F8FAFC', 
+      effect: null,
+      content: { title: 'Smart Text', paragraphs: ['Use [highlighted text|#FF6B00] to add colors!'] } 
+    },
+    content: { 
+      type: 'content', 
+      bgColor: '#FFFFFF', 
+      effect: null,
+      content: { 
+        title: 'Content Title', 
+        description: 'Description...', 
+        btnText: 'Learn More',
+        imageUrl: '',
+        showImage: true,
+        imagePosition: 'left'
+      } 
+    },
+    features: { 
+      type: 'features', 
+      bgColor: '#F8FAFC', 
+      effect: null,
+      content: { 
+        title: 'Features', 
+        subtitle: 'What we offer', 
+        feature1Title: 'Feature 1', 
+        feature1Text: 'Description', 
+        feature2Title: 'Feature 2', 
+        feature2Text: 'Description', 
+        feature3Title: 'Feature 3', 
+        feature3Text: 'Description' 
+      } 
+    },
+    bio: { 
+      type: 'bio', 
+      bgColor: '#FFFFFF', 
+      effect: null,
+      content: { name: 'Your Name', title: 'Your Title', bio: 'Bio...', imageUrl: '' } 
+    },
+    form: { 
+      type: 'form', 
+      bgColor: '#F8FAFC', 
+      effect: null,
+      content: { title: 'Register', subtitle: 'Fill form', btnText: 'Submit' } 
+    },
   };
 
   const addSection = (type) => {
@@ -329,9 +462,16 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
 
   const updateThankYou = (field, value) => onUpdate({ ...page, thankYou: { ...page.thankYou, [field]: value } });
   const updateTheme = (field, value) => onUpdate({ ...page, theme: { ...page.theme, [field]: value } });
+  const updateSEO = (field, value) => onUpdate({ ...page, seo: { ...page.seo, [field]: value } });
 
   return (
-    <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed top-0 right-0 w-[420px] h-full bg-slate-900 text-white z-50 flex flex-col shadow-2xl">
+    <motion.div 
+      initial={{ x: '100%' }} 
+      animate={{ x: 0 }} 
+      exit={{ x: '100%' }} 
+      transition={{ type: 'spring', damping: 25, stiffness: 200 }} 
+      className="fixed top-0 right-0 w-[420px] h-full bg-slate-900 text-white z-50 flex flex-col shadow-2xl"
+    >
       <div className="flex justify-between items-center p-6 border-b border-slate-700">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-orange-500 rounded-lg"><Edit3 size={20} /></div>
@@ -344,8 +484,12 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
       </div>
 
       <div className="flex border-b border-slate-700">
-        {['sections', 'thankyou', 'theme'].map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-4 text-xs font-bold uppercase ${activeTab === tab ? 'text-orange-500 border-b-2 border-orange-500 bg-slate-800' : 'text-slate-500'}`}>
+        {['sections', 'seo', 'thankyou', 'theme'].map(tab => (
+          <button 
+            key={tab} 
+            onClick={() => setActiveTab(tab)} 
+            className={`flex-1 py-4 text-xs font-bold uppercase ${activeTab === tab ? 'text-orange-500 border-b-2 border-orange-500 bg-slate-800' : 'text-slate-500'}`}
+          >
             {tab}
           </button>
         ))}
@@ -361,7 +505,11 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
               {showAddMenu && (
                 <div className="mt-2 bg-slate-800 rounded-lg p-2 space-y-1">
                   {Object.keys(SECTION_TEMPLATES).map(type => (
-                    <button key={type} onClick={() => addSection(type)} className="w-full text-left px-3 py-2 hover:bg-slate-700 rounded text-sm capitalize flex items-center gap-2">
+                    <button 
+                      key={type} 
+                      onClick={() => addSection(type)} 
+                      className="w-full text-left px-3 py-2 hover:bg-slate-700 rounded text-sm capitalize flex items-center gap-2"
+                    >
                       {type === 'hero' && <Type size={14} />}
                       {type === 'smarttext' && <FileText size={14} />}
                       {type === 'content' && <ImageIcon size={14} />}
@@ -378,39 +526,173 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
             <div className="space-y-3">
               {page.sections.map((section, idx) => (
                 <div key={section.id} className="bg-slate-800 rounded-lg border border-slate-700">
-                  <div className="flex justify-between items-center p-3 cursor-pointer hover:bg-slate-750" onClick={() => setExpandedSection(expandedSection === section.id ? null : section.id)}>
+                  <div 
+                    className="flex justify-between items-center p-3 cursor-pointer hover:bg-slate-750" 
+                    onClick={() => setExpandedSection(expandedSection === section.id ? null : section.id)}
+                  >
                     <div className="flex items-center gap-3">
                       <GripVertical size={16} className="text-slate-500" />
                       <span className="text-xs font-bold uppercase px-2 py-1 rounded bg-slate-700">{section.type}</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <button onClick={(e) => { e.stopPropagation(); moveSection(section.id, 'up'); }} disabled={idx === 0} className="p-1 hover:bg-slate-600 rounded disabled:opacity-30"><ChevronUp size={14} /></button>
-                      <button onClick={(e) => { e.stopPropagation(); moveSection(section.id, 'down'); }} disabled={idx === page.sections.length - 1} className="p-1 hover:bg-slate-600 rounded disabled:opacity-30"><ChevronDown size={14} /></button>
-                      <button onClick={(e) => { e.stopPropagation(); deleteSection(section.id); }} className="p-1 hover:bg-red-500/20 text-red-400 rounded"><Trash2 size={14} /></button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); moveSection(section.id, 'up'); }} 
+                        disabled={idx === 0} 
+                        className="p-1 hover:bg-slate-600 rounded disabled:opacity-30"
+                      >
+                        <ChevronUp size={14} />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); moveSection(section.id, 'down'); }} 
+                        disabled={idx === page.sections.length - 1} 
+                        className="p-1 hover:bg-slate-600 rounded disabled:opacity-30"
+                      >
+                        <ChevronDown size={14} />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); deleteSection(section.id); }} 
+                        className="p-1 hover:bg-red-500/20 text-red-400 rounded"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                       <ChevronRight size={16} className={`text-slate-400 transition-transform ${expandedSection === section.id ? 'rotate-90' : ''}`} />
                     </div>
                   </div>
 
                   {expandedSection === section.id && (
                     <div className="p-4 pt-2 space-y-3 border-t border-slate-700">
+                      {/* Background Color */}
                       <div>
                         <label className="text-xs text-slate-400 uppercase block mb-1">Background Color</label>
                         <div className="flex gap-2">
-                          <input type="color" value={section.bgColor || '#FFFFFF'} onChange={(e) => updateSection(section.id, 'bgColor', e.target.value)} className="w-12 h-10 rounded cursor-pointer" />
-                          <input type="text" value={section.bgColor || '#FFFFFF'} onChange={(e) => updateSection(section.id, 'bgColor', e.target.value)} className="flex-1 bg-slate-950 p-2 text-xs rounded border border-slate-600 font-mono" />
+                          <input 
+                            type="color" 
+                            value={section.bgColor || '#FFFFFF'} 
+                            onChange={(e) => updateSection(section.id, 'bgColor', e.target.value)} 
+                            className="w-12 h-10 rounded cursor-pointer" 
+                          />
+                          <input 
+                            type="text" 
+                            value={section.bgColor || '#FFFFFF'} 
+                            onChange={(e) => updateSection(section.id, 'bgColor', e.target.value)} 
+                            className="flex-1 bg-slate-950 p-2 text-xs rounded border border-slate-600 font-mono" 
+                          />
                         </div>
                       </div>
 
-                      {Object.entries(section.content).map(([key, value]) => (
+                      {/* Visual Effect */}
+                      <div>
+                        <label className="text-xs text-slate-400 uppercase block mb-1">Visual Effect</label>
+                        <select 
+                          value={section.effect || 'none'} 
+                          onChange={(e) => updateSection(section.id, 'effect', e.target.value === 'none' ? null : e.target.value)}
+                          className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600"
+                        >
+                          <option value="none">None</option>
+                          <option value="pulse">Pulse</option>
+                          <option value="bounce">Bounce</option>
+                          <option value="glow">Glow</option>
+                          <option value="shake">Shake</option>
+                        </select>
+                      </div>
+
+                      {/* Image URL for Content sections */}
+                      {section.type === 'content' && (
+                        <>
+                          <div>
+                            <label className="text-xs text-slate-400 uppercase block mb-1">Image URL</label>
+                            <input 
+                              type="url"
+                              value={section.content.imageUrl || ''} 
+                              onChange={(e) => updateSectionContent(section.id, 'imageUrl', e.target.value)} 
+                              placeholder="https://example.com/image.jpg"
+                              className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600" 
+                            />
+                          </div>
+                          <div>
+                            <label className="flex items-center gap-2 text-sm">
+                              <input 
+                                type="checkbox" 
+                                checked={section.content.showImage !== false} 
+                                onChange={(e) => updateSectionContent(section.id, 'showImage', e.target.checked)}
+                                className="w-4 h-4"
+                              />
+                              Show Image
+                            </label>
+                          </div>
+                          <div>
+                            <label className="text-xs text-slate-400 uppercase block mb-1">Image Position</label>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => updateSectionContent(section.id, 'imagePosition', 'left')}
+                                className={`flex-1 py-2 px-3 text-xs rounded ${section.content.imagePosition === 'left' || !section.content.imagePosition ? 'bg-orange-500 text-white' : 'bg-slate-950 text-slate-400'}`}
+                              >
+                                Left
+                              </button>
+                              <button
+                                onClick={() => updateSectionContent(section.id, 'imagePosition', 'right')}
+                                className={`flex-1 py-2 px-3 text-xs rounded ${section.content.imagePosition === 'right' ? 'bg-orange-500 text-white' : 'bg-slate-950 text-slate-400'}`}
+                              >
+                                Right
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Image URL for Bio sections */}
+                      {section.type === 'bio' && (
+                        <div>
+                          <label className="text-xs text-slate-400 uppercase block mb-1">Profile Image URL</label>
+                          <input 
+                            type="url"
+                            value={section.content.imageUrl || ''} 
+                            onChange={(e) => updateSectionContent(section.id, 'imageUrl', e.target.value)} 
+                            placeholder="https://example.com/profile.jpg"
+                            className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600" 
+                          />
+                        </div>
+                      )}
+
+                      {/* Smart Text Info */}
+                      {section.type === 'smarttext' && (
+                        <div className="bg-slate-950 p-3 rounded border border-slate-700">
+                          <p className="text-xs text-slate-400 mb-2">💡 Smart Text Tip:</p>
+                          <p className="text-xs text-slate-300">Use <code className="bg-slate-800 px-1 py-0.5 rounded">[Text|#color]</code> to highlight words!</p>
+                          <p className="text-xs text-slate-500 mt-1">Example: Get it [FREE|#00ff00] today!</p>
+                        </div>
+                      )}
+
+                      {/* Section Content Fields */}
+                      {Object.entries(section.content).filter(([key]) => 
+                        !['imageUrl', 'showImage', 'imagePosition'].includes(key)
+                      ).map(([key, value]) => (
                         <div key={key}>
-                          <label className="text-xs text-slate-400 uppercase block mb-1">{key.replace(/([A-Z])/g, ' $1')}</label>
+                          <label className="text-xs text-slate-400 uppercase block mb-1">
+                            {key.replace(/([A-Z])/g, ' $1').replace(/^\w/, c => c.toUpperCase())}
+                          </label>
                           {Array.isArray(value) ? (
-                            <textarea value={value.join('\n')} onChange={(e) => updateSectionContent(section.id, key, e.target.value.split('\n'))} rows={3} className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600 resize-none" />
+                            <textarea 
+                              value={value.join('\n')} 
+                              onChange={(e) => updateSectionContent(section.id, key, e.target.value.split('\n'))} 
+                              rows={3} 
+                              className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600 resize-none" 
+                            />
                           ) : typeof value === 'string' && value.length > 40 ? (
-                            <textarea value={value} onChange={(e) => updateSectionContent(section.id, key, e.target.value)} rows={2} className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600 resize-none" />
-                          ) : (
-                            <input type="text" value={value} onChange={(e) => updateSectionContent(section.id, key, e.target.value)} className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600" />
-                          )}
+                            <textarea 
+                              value={value} 
+                              onChange={(e) => updateSectionContent(section.id, key, e.target.value)} 
+                              rows={2} 
+                              className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600 resize-none" 
+                            />
+                          ) : typeof value === 'string' ? (
+                            <input 
+                              type="text" 
+                              value={value} 
+                              onChange={(e) => updateSectionContent(section.id, key, e.target.value)} 
+                              className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600" 
+                            />
+                          ) : null}
                         </div>
                       ))}
                     </div>
@@ -421,27 +703,99 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
           </>
         )}
 
+        {activeTab === 'seo' && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4 text-slate-400">
+              <Globe size={20} />
+              <span className="text-sm font-bold">Search Engine Optimization</span>
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 uppercase mb-2 block">Meta Title</label>
+              <input 
+                type="text" 
+                value={page.seo?.title || ''} 
+                onChange={(e) => updateSEO('title', e.target.value)} 
+                placeholder="Your Page Title"
+                className="w-full bg-slate-800 p-3 text-sm rounded" 
+                maxLength={60}
+              />
+              <p className="text-xs text-slate-500 mt-1">{(page.seo?.title || '').length}/60 characters</p>
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 uppercase mb-2 block">Meta Description</label>
+              <textarea 
+                value={page.seo?.description || ''} 
+                onChange={(e) => updateSEO('description', e.target.value)} 
+                rows={3} 
+                placeholder="Brief description of your page"
+                className="w-full bg-slate-800 p-3 text-sm rounded resize-none" 
+                maxLength={160}
+              />
+              <p className="text-xs text-slate-500 mt-1">{(page.seo?.description || '').length}/160 characters</p>
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 uppercase mb-2 block">Keywords</label>
+              <input 
+                type="text" 
+                value={page.seo?.keywords || ''} 
+                onChange={(e) => updateSEO('keywords', e.target.value)} 
+                placeholder="education, course, learning"
+                className="w-full bg-slate-800 p-3 text-sm rounded" 
+              />
+              <p className="text-xs text-slate-500 mt-1">Comma-separated keywords</p>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'thankyou' && (
           <div className="space-y-4">
             <div>
               <label className="text-xs text-slate-400 uppercase mb-2 block">Title</label>
-              <input type="text" value={page.thankYou.title || ''} onChange={(e) => updateThankYou('title', e.target.value)} className="w-full bg-slate-800 p-3 text-sm rounded" />
+              <input 
+                type="text" 
+                value={page.thankYou.title || ''} 
+                onChange={(e) => updateThankYou('title', e.target.value)} 
+                className="w-full bg-slate-800 p-3 text-sm rounded" 
+              />
             </div>
             <div>
               <label className="text-xs text-slate-400 uppercase mb-2 block">Message</label>
-              <textarea value={page.thankYou.message || ''} onChange={(e) => updateThankYou('message', e.target.value)} rows={3} className="w-full bg-slate-800 p-3 text-sm rounded resize-none" />
+              <textarea 
+                value={page.thankYou.message || ''} 
+                onChange={(e) => updateThankYou('message', e.target.value)} 
+                rows={3} 
+                className="w-full bg-slate-800 p-3 text-sm rounded resize-none" 
+              />
             </div>
             <div className="pt-4 border-t border-slate-700">
               <label className="flex items-center gap-2 mb-4">
-                <input type="checkbox" checked={page.thankYou.showSocials || false} onChange={(e) => updateThankYou('showSocials', e.target.checked)} />
+                <input 
+                  type="checkbox" 
+                  checked={page.thankYou.showSocials || false} 
+                  onChange={(e) => updateThankYou('showSocials', e.target.checked)} 
+                />
                 <span className="text-sm">Show Social Links</span>
               </label>
               {page.thankYou.showSocials && (
                 <div className="space-y-3">
-                  {['whatsappLink', 'telegramLink', 'instagramLink', 'facebookLink'].map(field => (
+                  {[
+                    { field: 'whatsappLink', label: 'WhatsApp', icon: MessageCircle },
+                    { field: 'telegramLink', label: 'Telegram', icon: Send },
+                    { field: 'instagramLink', label: 'Instagram', icon: Instagram },
+                    { field: 'facebookLink', label: 'Facebook', icon: Facebook }
+                  ].map(({ field, label, icon: Icon }) => (
                     <div key={field}>
-                      <label className="text-xs text-slate-400 uppercase block mb-1">{field.replace('Link', '')}</label>
-                      <input type="url" value={page.thankYou[field] || ''} onChange={(e) => updateThankYou(field, e.target.value)} className="w-full bg-slate-800 p-2 text-sm rounded" />
+                      <label className="text-xs text-slate-400 uppercase block mb-1 flex items-center gap-2">
+                        <Icon size={12} />
+                        {label}
+                      </label>
+                      <input 
+                        type="url" 
+                        value={page.thankYou[field] || ''} 
+                        onChange={(e) => updateThankYou(field, e.target.value)} 
+                        placeholder={`https://${label.toLowerCase()}.com/...`}
+                        className="w-full bg-slate-800 p-2 text-sm rounded" 
+                      />
                     </div>
                   ))}
                 </div>
@@ -452,18 +806,36 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
 
         {activeTab === 'theme' && (
           <div className="space-y-4">
-            {['primary', 'secondary', 'bg'].map(field => (
+            {[
+              { field: 'primary', label: 'Primary Color' },
+              { field: 'secondary', label: 'Secondary Color' },
+              { field: 'bg', label: 'Background Color' }
+            ].map(({ field, label }) => (
               <div key={field}>
-                <label className="text-xs text-slate-400 uppercase mb-2 block">{field} Color</label>
+                <label className="text-xs text-slate-400 uppercase mb-2 block">{label}</label>
                 <div className="flex gap-2">
-                  <input type="color" value={page.theme[field]} onChange={(e) => updateTheme(field, e.target.value)} className="w-12 h-10 rounded cursor-pointer" />
-                  <input type="text" value={page.theme[field]} onChange={(e) => updateTheme(field, e.target.value)} className="flex-1 bg-slate-800 p-2 text-sm rounded font-mono" />
+                  <input 
+                    type="color" 
+                    value={page.theme[field]} 
+                    onChange={(e) => updateTheme(field, e.target.value)} 
+                    className="w-12 h-10 rounded cursor-pointer" 
+                  />
+                  <input 
+                    type="text" 
+                    value={page.theme[field]} 
+                    onChange={(e) => updateTheme(field, e.target.value)} 
+                    className="flex-1 bg-slate-800 p-2 text-sm rounded font-mono" 
+                  />
                 </div>
               </div>
             ))}
             <div>
               <label className="text-xs text-slate-400 uppercase mb-2 block">Border Radius</label>
-              <select value={page.theme.radius} onChange={(e) => updateTheme('radius', e.target.value)} className="w-full bg-slate-800 p-3 text-sm rounded">
+              <select 
+                value={page.theme.radius} 
+                onChange={(e) => updateTheme('radius', e.target.value)} 
+                className="w-full bg-slate-800 p-3 text-sm rounded"
+              >
                 <option value="rounded-none">Square</option>
                 <option value="rounded">Small</option>
                 <option value="rounded-lg">Medium</option>
@@ -474,7 +846,11 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
             </div>
             <div>
               <label className="text-xs text-slate-400 uppercase mb-2 block">Font Family</label>
-              <select value={page.theme.font || 'font-sans'} onChange={(e) => updateTheme('font', e.target.value)} className="w-full bg-slate-800 p-3 text-sm rounded">
+              <select 
+                value={page.theme.font || 'font-sans'} 
+                onChange={(e) => updateTheme('font', e.target.value)} 
+                className="w-full bg-slate-800 p-3 text-sm rounded"
+              >
                 <option value="font-sans">Sans Serif</option>
                 <option value="font-serif">Serif</option>
                 <option value="font-mono">Monospace</option>
