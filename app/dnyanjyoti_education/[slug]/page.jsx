@@ -5,7 +5,7 @@ import {
   ChevronRight, Star, X, Edit3, Plus, Trash2, 
   Instagram, Send, MessageCircle, Facebook,
   ChevronUp, ChevronDown, GripVertical,
-  Type, Image as ImageIcon, Award, User, FileText, Mail, Globe, Tag
+  Type, Image as ImageIcon, Award, User, FileText, Mail, Globe, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
@@ -14,8 +14,8 @@ import { auth, db } from '@/lib/firebase';
 
 const APP_ID = "dnyanjyoti-master";
 
-// Helper function to parse Smart Text with [Text|color] syntax
-const parseSmartText = (text) => {
+// Parse Smart Text with [Text|color] syntax and apply VFX per word
+const parseSmartText = (text, wordEffect = null, wordEffectConfig = {}) => {
   const regex = /\[([^\]]+)\|([^\]]+)\]/g;
   const parts = [];
   let lastIndex = 0;
@@ -25,7 +25,13 @@ const parseSmartText = (text) => {
     if (match.index > lastIndex) {
       parts.push({ text: text.slice(lastIndex, match.index), highlight: false });
     }
-    parts.push({ text: match[1], highlight: true, color: match[2] });
+    parts.push({ 
+      text: match[1], 
+      highlight: true, 
+      color: match[2],
+      effect: wordEffect,
+      effectConfig: wordEffectConfig
+    });
     lastIndex = regex.lastIndex;
   }
 
@@ -36,66 +42,158 @@ const parseSmartText = (text) => {
   return parts.length > 0 ? parts : [{ text, highlight: false }];
 };
 
-const HeroSection = ({ section, theme }) => (
-  <section 
-    className={`relative overflow-hidden pt-24 pb-32 px-6 ${section.effect ? getEffectClass(section.effect) : ''}`}
-    style={{ backgroundColor: section.bgColor || theme.secondary, color: 'white' }}
-  >
-    <div className="max-w-5xl mx-auto text-center">
-      <div className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full font-bold text-xs mb-8 border" style={{ backgroundColor: `${theme.primary}20`, color: theme.primary, borderColor: theme.primary }}>
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: theme.primary }}></span>
-          <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: theme.primary }}></span>
-        </span>
-        {section.content.tag || 'NEW'}
-      </div>
-      <h1 className="text-4xl md:text-6xl font-extrabold mb-8">{section.content.headline || 'Your Headline'}</h1>
-      <p className="text-lg md:text-2xl text-slate-300 mb-10">{section.content.subheadline || 'Subtitle here'}</p>
-      <a href="#form">
-        <button className={`px-10 py-5 font-bold text-lg text-white ${theme.radius} hover:scale-105 transition-all`} style={{ backgroundColor: theme.primary }}>
-          {section.content.ctaText || 'Get Started'} <ChevronRight className="inline ml-2" size={22} />
-        </button>
-      </a>
-    </div>
-  </section>
-);
+const getEffectClass = (effect, config = {}) => {
+  if (!effect) return '';
+  
+  const effects = {
+    pulse: 'animate-pulse-elegant',
+    bounce: 'animate-bounce-elegant',
+    glow: 'animate-glow-elegant',
+    shake: 'animate-shake-elegant'
+  };
+  return effects[effect] || '';
+};
 
-const SmartTextSection = ({ section, theme }) => (
-  <section 
-    className={`py-20 px-6 ${section.effect ? getEffectClass(section.effect) : ''}`}
-    style={{ backgroundColor: section.bgColor || theme.bg }}
-  >
-    <div className="max-w-4xl mx-auto">
-      <h2 className="text-3xl md:text-5xl font-bold text-center mb-6" style={{ color: theme.secondary }}>
-        {section.content.title || 'Smart Text Title'}
-      </h2>
-      <div className="text-lg text-slate-700 leading-relaxed space-y-4">
-        {(section.content.paragraphs || ['Add your text here...']).map((para, i) => (
-          <p key={i}>
-            {parseSmartText(para).map((part, idx) => 
-              part.highlight ? (
-                <strong key={idx} style={{ color: part.color, fontWeight: 'bold' }}>
-                  {part.text}
-                </strong>
-              ) : (
-                <span key={idx}>{part.text}</span>
-              )
-            )}
-          </p>
-        ))}
+const getEffectStyle = (effect, config = {}) => {
+  if (effect === 'glow') {
+    const color = config.glowColor || '#FF6B00';
+    const intensity = config.glowIntensity || 0.5;
+    return {
+      filter: `drop-shadow(0 0 ${intensity * 20}px ${color})`,
+      textShadow: `0 0 ${intensity * 10}px ${color}`
+    };
+  }
+  return {};
+};
+
+const HeroSection = ({ section, theme }) => {
+  const fontSize = section.fontSize || 'default';
+  const fontSizeClasses = {
+    small: 'text-3xl md:text-5xl',
+    default: 'text-4xl md:text-6xl',
+    large: 'text-5xl md:text-7xl',
+    xlarge: 'text-6xl md:text-8xl'
+  };
+
+  return (
+    <section 
+      className={`relative overflow-hidden pt-24 pb-32 px-6 ${section.effect ? getEffectClass(section.effect, section.effectConfig) : ''}`}
+      style={{ 
+        backgroundColor: section.bgColor || theme.secondary, 
+        color: 'white',
+        ...getEffectStyle(section.effect, section.effectConfig)
+      }}
+    >
+      <div className="max-w-5xl mx-auto text-center">
+        <div className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full font-bold text-xs mb-8 border" style={{ backgroundColor: `${theme.primary}20`, color: theme.primary, borderColor: theme.primary }}>
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: theme.primary }}></span>
+            <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: theme.primary }}></span>
+          </span>
+          {section.content.tag || 'NEW'}
+        </div>
+        <h1 className={`${fontSizeClasses[fontSize]} font-extrabold mb-8`}>{section.content.headline || 'Your Headline'}</h1>
+        <p className="text-lg md:text-2xl text-slate-300 mb-10">{section.content.subheadline || 'Subtitle here'}</p>
+        <a href="#form">
+          <button className={`px-10 py-5 font-bold text-lg text-white ${theme.radius} hover:scale-105 transition-all`} style={{ backgroundColor: theme.primary }}>
+            {section.content.ctaText || 'Get Started'} <ChevronRight className="inline ml-2" size={22} />
+          </button>
+        </a>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
+
+const SmartTextSection = ({ section, theme }) => {
+  const fontSize = section.fontSize || 'default';
+  const fontSizeClasses = {
+    small: 'text-base',
+    default: 'text-lg',
+    large: 'text-xl',
+    xlarge: 'text-2xl'
+  };
+
+  const titleSizeClasses = {
+    small: 'text-2xl md:text-4xl',
+    default: 'text-3xl md:text-5xl',
+    large: 'text-4xl md:text-6xl',
+    xlarge: 'text-5xl md:text-7xl'
+  };
+
+  const width = section.width || 'default';
+  const widthClasses = {
+    narrow: 'max-w-2xl',
+    default: 'max-w-4xl',
+    wide: 'max-w-6xl',
+    full: 'max-w-7xl'
+  };
+
+  return (
+    <section 
+      className={`py-20 px-6 ${section.effect ? getEffectClass(section.effect, section.effectConfig) : ''}`}
+      style={{ 
+        backgroundColor: section.bgColor || theme.bg,
+        ...getEffectStyle(section.effect, section.effectConfig)
+      }}
+    >
+      <div className={`${widthClasses[width]} mx-auto`}>
+        <h2 className={`${titleSizeClasses[fontSize]} font-bold text-center mb-6`} style={{ color: theme.secondary }}>
+          {section.content.title || 'Smart Text Title'}
+        </h2>
+        <div className={`${fontSizeClasses[fontSize]} text-slate-700 leading-relaxed space-y-4`}>
+          {(section.content.paragraphs || ['Add your text here...']).map((para, i) => (
+            <p key={i}>
+              {parseSmartText(para, section.wordEffect, section.wordEffectConfig).map((part, idx) => 
+                part.highlight ? (
+                  <strong 
+                    key={idx} 
+                    className={part.effect ? getEffectClass(part.effect, part.effectConfig) : ''}
+                    style={{ 
+                      color: part.color, 
+                      fontWeight: 'bold',
+                      ...getEffectStyle(part.effect, part.effectConfig)
+                    }}
+                  >
+                    {part.text}
+                  </strong>
+                ) : (
+                  <span key={idx}>{part.text}</span>
+                )
+              )}
+            </p>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
 
 const ContentSection = ({ section, theme }) => {
   const imagePosition = section.content.imagePosition || 'left';
   const showImage = section.content.showImage !== false;
+  const fontSize = section.fontSize || 'default';
+  
+  const fontSizeClasses = {
+    small: 'text-base',
+    default: 'text-lg',
+    large: 'text-xl',
+    xlarge: 'text-2xl'
+  };
+
+  const titleSizeClasses = {
+    small: 'text-2xl md:text-3xl',
+    default: 'text-3xl md:text-4xl',
+    large: 'text-4xl md:text-5xl',
+    xlarge: 'text-5xl md:text-6xl'
+  };
   
   return (
     <section 
-      className={`py-20 px-6 ${section.effect ? getEffectClass(section.effect) : ''}`}
-      style={{ backgroundColor: section.bgColor || theme.bg }}
+      className={`py-20 px-6 ${section.effect ? getEffectClass(section.effect, section.effectConfig) : ''}`}
+      style={{ 
+        backgroundColor: section.bgColor || theme.bg,
+        ...getEffectStyle(section.effect, section.effectConfig)
+      }}
     >
       <div className={`max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center ${imagePosition === 'right' ? 'md:grid-flow-dense' : ''}`}>
         {showImage && (
@@ -108,10 +206,10 @@ const ContentSection = ({ section, theme }) => {
           </div>
         )}
         <div className={imagePosition === 'right' ? 'md:col-start-1' : ''}>
-          <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: theme.secondary }}>
+          <h2 className={`${titleSizeClasses[fontSize]} font-bold mb-6`} style={{ color: theme.secondary }}>
             {section.content.title || 'Content Title'}
           </h2>
-          <p className="text-lg text-slate-700 mb-6">
+          <p className={`${fontSizeClasses[fontSize]} text-slate-700 mb-6`}>
             {section.content.description || 'Add your content description here...'}
           </p>
           <button className={`px-8 py-3 font-bold text-white ${theme.radius}`} style={{ backgroundColor: theme.primary }}>
@@ -123,88 +221,127 @@ const ContentSection = ({ section, theme }) => {
   );
 };
 
-const FeaturesSection = ({ section, theme }) => (
-  <section 
-    className={`py-20 px-6 ${section.effect ? getEffectClass(section.effect) : ''}`}
-    style={{ backgroundColor: section.bgColor || theme.bg }}
-  >
-    <div className="max-w-6xl mx-auto">
-      <h2 className="text-3xl md:text-5xl font-bold text-center mb-4" style={{ color: theme.secondary }}>
-        {section.content.title || 'Features'}
-      </h2>
-      <p className="text-center text-slate-600 mb-16 text-lg">{section.content.subtitle || 'What we offer'}</p>
-      <div className="grid md:grid-cols-3 gap-8">
-        {[1, 2, 3].map(num => (
-          <div key={num} className={`bg-white p-8 ${theme.radius} shadow-lg hover:shadow-xl transition-shadow text-center`}>
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: `${theme.primary}20` }}>
-              <Award size={32} style={{ color: theme.primary }} />
-            </div>
-            <h3 className="text-xl font-bold mb-3" style={{ color: theme.secondary }}>
-              {section.content[`feature${num}Title`] || `Feature ${num}`}
-            </h3>
-            <p className="text-slate-600">{section.content[`feature${num}Text`] || 'Description here'}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
-);
-
-const BioSection = ({ section, theme }) => (
-  <section 
-    className={`py-20 px-6 ${section.effect ? getEffectClass(section.effect) : ''}`}
-    style={{ backgroundColor: section.bgColor || theme.bg }}
-  >
-    <div className="max-w-4xl mx-auto text-center">
-      <div className="w-32 h-32 rounded-full mx-auto mb-6 bg-slate-200 flex items-center justify-center overflow-hidden">
-        {section.content.imageUrl ? (
-          <img src={section.content.imageUrl} alt={section.content.name || 'Bio'} className="w-full h-full object-cover" />
-        ) : (
-          <User size={64} className="text-slate-400" />
-        )}
-      </div>
-      <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: theme.secondary }}>
-        {section.content.name || 'Your Name'}
-      </h2>
-      <p className="text-xl mb-6" style={{ color: theme.primary }}>{section.content.title || 'Your Title'}</p>
-      <p className="text-lg text-slate-700 max-w-2xl mx-auto">
-        {section.content.bio || 'Write your bio here...'}
-      </p>
-    </div>
-  </section>
-);
-
-const FormSection = ({ section, theme, onSubmit }) => (
-  <section 
-    id="form" 
-    className={`py-20 px-6 ${section.effect ? getEffectClass(section.effect) : ''}`}
-    style={{ backgroundColor: section.bgColor || theme.bg }}
-  >
-    <div className={`max-w-lg mx-auto bg-white shadow-2xl p-8 ${theme.radius}`}>
-      <h2 className="text-3xl font-bold text-center mb-3" style={{ color: theme.secondary }}>
-        {section.content.title || 'Register Now'}
-      </h2>
-      <p className="text-center text-slate-600 mb-8">{section.content.subtitle || 'Fill the form'}</p>
-      <form onSubmit={onSubmit} className="space-y-4">
-        <input required name="name" placeholder="Full Name" className={`w-full px-4 py-3 border border-slate-300 outline-none ${theme.radius}`} />
-        <input required name="email" type="email" placeholder="Email" className={`w-full px-4 py-3 border border-slate-300 outline-none ${theme.radius}`} />
-        <input required name="phone" type="tel" placeholder="Phone" className={`w-full px-4 py-3 border border-slate-300 outline-none ${theme.radius}`} />
-        <button type="submit" className={`w-full py-4 text-white font-bold ${theme.radius} hover:scale-105 transition-all`} style={{ backgroundColor: theme.primary }}>
-          {section.content.btnText || 'Submit'}
-        </button>
-      </form>
-    </div>
-  </section>
-);
-
-const getEffectClass = (effect) => {
-  const effects = {
-    pulse: 'animate-pulse',
-    bounce: 'animate-bounce',
-    glow: 'shadow-[0_0_30px_rgba(255,107,0,0.5)]',
-    shake: 'animate-shake'
+const FeaturesSection = ({ section, theme }) => {
+  const fontSize = section.fontSize || 'default';
+  
+  const titleSizeClasses = {
+    small: 'text-2xl md:text-4xl',
+    default: 'text-3xl md:text-5xl',
+    large: 'text-4xl md:text-6xl',
+    xlarge: 'text-5xl md:text-7xl'
   };
-  return effects[effect] || '';
+
+  return (
+    <section 
+      className={`py-20 px-6 ${section.effect ? getEffectClass(section.effect, section.effectConfig) : ''}`}
+      style={{ 
+        backgroundColor: section.bgColor || theme.bg,
+        ...getEffectStyle(section.effect, section.effectConfig)
+      }}
+    >
+      <div className="max-w-6xl mx-auto">
+        <h2 className={`${titleSizeClasses[fontSize]} font-bold text-center mb-4`} style={{ color: theme.secondary }}>
+          {section.content.title || 'Features'}
+        </h2>
+        <p className="text-center text-slate-600 mb-16 text-lg">{section.content.subtitle || 'What we offer'}</p>
+        <div className="grid md:grid-cols-3 gap-8">
+          {[1, 2, 3].map(num => (
+            <div key={num} className={`bg-white p-8 ${theme.radius} shadow-lg hover:shadow-xl transition-shadow text-center`}>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: `${theme.primary}20` }}>
+                <Award size={32} style={{ color: theme.primary }} />
+              </div>
+              <h3 className="text-xl font-bold mb-3" style={{ color: theme.secondary }}>
+                {section.content[`feature${num}Title`] || `Feature ${num}`}
+              </h3>
+              <p className="text-slate-600">{section.content[`feature${num}Text`] || 'Description here'}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const BioSection = ({ section, theme }) => {
+  const fontSize = section.fontSize || 'default';
+  
+  const titleSizeClasses = {
+    small: 'text-2xl md:text-3xl',
+    default: 'text-3xl md:text-4xl',
+    large: 'text-4xl md:text-5xl',
+    xlarge: 'text-5xl md:text-6xl'
+  };
+
+  const textSizeClasses = {
+    small: 'text-base',
+    default: 'text-lg',
+    large: 'text-xl',
+    xlarge: 'text-2xl'
+  };
+
+  return (
+    <section 
+      className={`py-20 px-6 ${section.effect ? getEffectClass(section.effect, section.effectConfig) : ''}`}
+      style={{ 
+        backgroundColor: section.bgColor || theme.bg,
+        ...getEffectStyle(section.effect, section.effectConfig)
+      }}
+    >
+      <div className="max-w-4xl mx-auto text-center">
+        <div className="w-32 h-32 rounded-full mx-auto mb-6 bg-slate-200 flex items-center justify-center overflow-hidden">
+          {section.content.imageUrl ? (
+            <img src={section.content.imageUrl} alt={section.content.name || 'Bio'} className="w-full h-full object-cover" />
+          ) : (
+            <User size={64} className="text-slate-400" />
+          )}
+        </div>
+        <h2 className={`${titleSizeClasses[fontSize]} font-bold mb-4`} style={{ color: theme.secondary }}>
+          {section.content.name || 'Your Name'}
+        </h2>
+        <p className="text-xl mb-6" style={{ color: theme.primary }}>{section.content.title || 'Your Title'}</p>
+        <p className={`${textSizeClasses[fontSize]} text-slate-700 max-w-2xl mx-auto`}>
+          {section.content.bio || 'Write your bio here...'}
+        </p>
+      </div>
+    </section>
+  );
+};
+
+const FormSection = ({ section, theme, onSubmit }) => {
+  const fontSize = section.fontSize || 'default';
+  
+  const titleSizeClasses = {
+    small: 'text-2xl',
+    default: 'text-3xl',
+    large: 'text-4xl',
+    xlarge: 'text-5xl'
+  };
+
+  return (
+    <section 
+      id="form" 
+      className={`py-20 px-6 ${section.effect ? getEffectClass(section.effect, section.effectConfig) : ''}`}
+      style={{ 
+        backgroundColor: section.bgColor || theme.bg,
+        ...getEffectStyle(section.effect, section.effectConfig)
+      }}
+    >
+      <div className={`max-w-lg mx-auto bg-white shadow-2xl p-8 ${theme.radius}`}>
+        <h2 className={`${titleSizeClasses[fontSize]} font-bold text-center mb-3`} style={{ color: theme.secondary }}>
+          {section.content.title || 'Register Now'}
+        </h2>
+        <p className="text-center text-slate-600 mb-8">{section.content.subtitle || 'Fill the form'}</p>
+        <form onSubmit={onSubmit} className="space-y-4">
+          <input required name="name" placeholder="Full Name" className={`w-full px-4 py-3 border border-slate-300 outline-none ${theme.radius}`} />
+          <input required name="email" type="email" placeholder="Email" className={`w-full px-4 py-3 border border-slate-300 outline-none ${theme.radius}`} />
+          <input required name="phone" type="tel" placeholder="Phone" className={`w-full px-4 py-3 border border-slate-300 outline-none ${theme.radius}`} />
+          <button type="submit" className={`w-full py-4 text-white font-bold ${theme.radius} hover:scale-105 transition-all`} style={{ backgroundColor: theme.primary }}>
+            {section.content.btnText || 'Submit'}
+          </button>
+        </form>
+      </div>
+    </section>
+  );
 };
 
 const RenderSection = ({ section, theme, onSubmit }) => {
@@ -379,18 +516,27 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
       type: 'hero', 
       bgColor: '#001124', 
       effect: null,
+      effectConfig: {},
+      fontSize: 'default',
       content: { tag: 'NEW', headline: 'Headline', subheadline: 'Subtitle', ctaText: 'Get Started' } 
     },
     smarttext: { 
       type: 'smarttext', 
       bgColor: '#F8FAFC', 
       effect: null,
+      effectConfig: {},
+      wordEffect: null,
+      wordEffectConfig: {},
+      fontSize: 'default',
+      width: 'default',
       content: { title: 'Smart Text', paragraphs: ['Use [highlighted text|#FF6B00] to add colors!'] } 
     },
     content: { 
       type: 'content', 
       bgColor: '#FFFFFF', 
       effect: null,
+      effectConfig: {},
+      fontSize: 'default',
       content: { 
         title: 'Content Title', 
         description: 'Description...', 
@@ -404,6 +550,8 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
       type: 'features', 
       bgColor: '#F8FAFC', 
       effect: null,
+      effectConfig: {},
+      fontSize: 'default',
       content: { 
         title: 'Features', 
         subtitle: 'What we offer', 
@@ -419,12 +567,16 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
       type: 'bio', 
       bgColor: '#FFFFFF', 
       effect: null,
+      effectConfig: {},
+      fontSize: 'default',
       content: { name: 'Your Name', title: 'Your Title', bio: 'Bio...', imageUrl: '' } 
     },
     form: { 
       type: 'form', 
       bgColor: '#F8FAFC', 
       effect: null,
+      effectConfig: {},
+      fontSize: 'default',
       content: { title: 'Register', subtitle: 'Fill form', btnText: 'Submit' } 
     },
   };
@@ -460,6 +612,20 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
     onUpdate({ ...page, sections: updated });
   };
 
+  const updateEffectConfig = (id, field, value) => {
+    const updated = page.sections.map(s => 
+      s.id === id ? { ...s, effectConfig: { ...s.effectConfig, [field]: value } } : s
+    );
+    onUpdate({ ...page, sections: updated });
+  };
+
+  const updateWordEffectConfig = (id, field, value) => {
+    const updated = page.sections.map(s => 
+      s.id === id ? { ...s, wordEffectConfig: { ...s.wordEffectConfig, [field]: value } } : s
+    );
+    onUpdate({ ...page, sections: updated });
+  };
+
   const updateThankYou = (field, value) => onUpdate({ ...page, thankYou: { ...page.thankYou, [field]: value } });
   const updateTheme = (field, value) => onUpdate({ ...page, theme: { ...page.theme, [field]: value } });
   const updateSEO = (field, value) => onUpdate({ ...page, seo: { ...page.seo, [field]: value } });
@@ -470,9 +636,9 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
       animate={{ x: 0 }} 
       exit={{ x: '100%' }} 
       transition={{ type: 'spring', damping: 25, stiffness: 200 }} 
-      className="fixed top-0 right-0 w-[420px] h-full bg-slate-900 text-white z-50 flex flex-col shadow-2xl"
+      className="fixed top-0 right-0 w-[420px] h-full bg-slate-900 text-white z-50 flex flex-col shadow-2xl overflow-hidden"
     >
-      <div className="flex justify-between items-center p-6 border-b border-slate-700">
+      <div className="flex justify-between items-center p-6 border-b border-slate-700 flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-orange-500 rounded-lg"><Edit3 size={20} /></div>
           <div>
@@ -483,7 +649,7 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
         <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg"><X size={20} /></button>
       </div>
 
-      <div className="flex border-b border-slate-700">
+      <div className="flex border-b border-slate-700 flex-shrink-0">
         {['sections', 'seo', 'thankyou', 'theme'].map(tab => (
           <button 
             key={tab} 
@@ -580,23 +746,158 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
                         </div>
                       </div>
 
-                      {/* Visual Effect */}
+                      {/* Font Size */}
                       <div>
-                        <label className="text-xs text-slate-400 uppercase block mb-1">Visual Effect</label>
+                        <label className="text-xs text-slate-400 uppercase block mb-1">Font Size</label>
+                        <select 
+                          value={section.fontSize || 'default'} 
+                          onChange={(e) => updateSection(section.id, 'fontSize', e.target.value)}
+                          className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600"
+                        >
+                          <option value="small">Small</option>
+                          <option value="default">Default</option>
+                          <option value="large">Large</option>
+                          <option value="xlarge">Extra Large</option>
+                        </select>
+                      </div>
+
+                      {/* Width (Smart Text only) */}
+                      {section.type === 'smarttext' && (
+                        <div>
+                          <label className="text-xs text-slate-400 uppercase block mb-1">Section Width</label>
+                          <select 
+                            value={section.width || 'default'} 
+                            onChange={(e) => updateSection(section.id, 'width', e.target.value)}
+                            className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600"
+                          >
+                            <option value="narrow">Narrow</option>
+                            <option value="default">Default</option>
+                            <option value="wide">Wide</option>
+                            <option value="full">Full Width</option>
+                          </select>
+                        </div>
+                      )}
+
+                      {/* Section Visual Effect */}
+                      <div>
+                        <label className="text-xs text-slate-400 uppercase block mb-1 flex items-center gap-2">
+                          <Sparkles size={12} />
+                          Section Visual Effect
+                        </label>
                         <select 
                           value={section.effect || 'none'} 
                           onChange={(e) => updateSection(section.id, 'effect', e.target.value === 'none' ? null : e.target.value)}
                           className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600"
                         >
                           <option value="none">None</option>
-                          <option value="pulse">Pulse</option>
-                          <option value="bounce">Bounce</option>
-                          <option value="glow">Glow</option>
-                          <option value="shake">Shake</option>
+                          <option value="pulse">Pulse (Elegant)</option>
+                          <option value="bounce">Bounce (Elegant)</option>
+                          <option value="glow">Glow (Customizable)</option>
+                          <option value="shake">Shake (Refined)</option>
                         </select>
                       </div>
 
-                      {/* Image URL for Content sections */}
+                      {/* Glow Effect Config */}
+                      {section.effect === 'glow' && (
+                        <div className="bg-slate-950 p-3 rounded space-y-2">
+                          <div>
+                            <label className="text-xs text-slate-400 block mb-1">Glow Color</label>
+                            <div className="flex gap-2">
+                              <input 
+                                type="color" 
+                                value={section.effectConfig?.glowColor || '#FF6B00'} 
+                                onChange={(e) => updateEffectConfig(section.id, 'glowColor', e.target.value)} 
+                                className="w-10 h-8 rounded cursor-pointer" 
+                              />
+                              <input 
+                                type="text" 
+                                value={section.effectConfig?.glowColor || '#FF6B00'} 
+                                onChange={(e) => updateEffectConfig(section.id, 'glowColor', e.target.value)} 
+                                className="flex-1 bg-slate-900 p-1 text-xs rounded font-mono" 
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-xs text-slate-400 block mb-1">Intensity: {section.effectConfig?.glowIntensity || 0.5}</label>
+                            <input 
+                              type="range" 
+                              min="0.1" 
+                              max="2" 
+                              step="0.1" 
+                              value={section.effectConfig?.glowIntensity || 0.5} 
+                              onChange={(e) => updateEffectConfig(section.id, 'glowIntensity', parseFloat(e.target.value))} 
+                              className="w-full" 
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Word Effect (Smart Text only) */}
+                      {section.type === 'smarttext' && (
+                        <>
+                          <div>
+                            <label className="text-xs text-slate-400 uppercase block mb-1 flex items-center gap-2">
+                              <Sparkles size={12} />
+                              Highlighted Word Effect
+                            </label>
+                            <select 
+                              value={section.wordEffect || 'none'} 
+                              onChange={(e) => updateSection(section.id, 'wordEffect', e.target.value === 'none' ? null : e.target.value)}
+                              className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600"
+                            >
+                              <option value="none">None</option>
+                              <option value="pulse">Pulse</option>
+                              <option value="bounce">Bounce</option>
+                              <option value="glow">Glow</option>
+                              <option value="shake">Shake</option>
+                            </select>
+                          </div>
+
+                          {/* Word Glow Config */}
+                          {section.wordEffect === 'glow' && (
+                            <div className="bg-slate-950 p-3 rounded space-y-2">
+                              <div>
+                                <label className="text-xs text-slate-400 block mb-1">Word Glow Color</label>
+                                <div className="flex gap-2">
+                                  <input 
+                                    type="color" 
+                                    value={section.wordEffectConfig?.glowColor || '#FF6B00'} 
+                                    onChange={(e) => updateWordEffectConfig(section.id, 'glowColor', e.target.value)} 
+                                    className="w-10 h-8 rounded cursor-pointer" 
+                                  />
+                                  <input 
+                                    type="text" 
+                                    value={section.wordEffectConfig?.glowColor || '#FF6B00'} 
+                                    onChange={(e) => updateWordEffectConfig(section.id, 'glowColor', e.target.value)} 
+                                    className="flex-1 bg-slate-900 p-1 text-xs rounded font-mono" 
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="text-xs text-slate-400 block mb-1">Intensity: {section.wordEffectConfig?.glowIntensity || 0.5}</label>
+                                <input 
+                                  type="range" 
+                                  min="0.1" 
+                                  max="2" 
+                                  step="0.1" 
+                                  value={section.wordEffectConfig?.glowIntensity || 0.5} 
+                                  onChange={(e) => updateWordEffectConfig(section.id, 'glowIntensity', parseFloat(e.target.value))} 
+                                  className="w-full" 
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Smart Text Info */}
+                          <div className="bg-slate-950 p-3 rounded border border-slate-700">
+                            <p className="text-xs text-slate-400 mb-2">💡 Smart Text Tip:</p>
+                            <p className="text-xs text-slate-300">Use <code className="bg-slate-800 px-1 py-0.5 rounded">[Text|#color]</code> to highlight!</p>
+                            <p className="text-xs text-slate-500 mt-1">Example: Get it [FREE|#00ff00] now!</p>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Image Controls for Content */}
                       {section.type === 'content' && (
                         <>
                           <div>
@@ -625,13 +926,13 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => updateSectionContent(section.id, 'imagePosition', 'left')}
-                                className={`flex-1 py-2 px-3 text-xs rounded ${section.content.imagePosition === 'left' || !section.content.imagePosition ? 'bg-orange-500 text-white' : 'bg-slate-950 text-slate-400'}`}
+                                className={`flex-1 py-2 px-3 text-xs rounded font-bold ${section.content.imagePosition === 'left' || !section.content.imagePosition ? 'bg-orange-500 text-white' : 'bg-slate-950 text-slate-400'}`}
                               >
                                 Left
                               </button>
                               <button
                                 onClick={() => updateSectionContent(section.id, 'imagePosition', 'right')}
-                                className={`flex-1 py-2 px-3 text-xs rounded ${section.content.imagePosition === 'right' ? 'bg-orange-500 text-white' : 'bg-slate-950 text-slate-400'}`}
+                                className={`flex-1 py-2 px-3 text-xs rounded font-bold ${section.content.imagePosition === 'right' ? 'bg-orange-500 text-white' : 'bg-slate-950 text-slate-400'}`}
                               >
                                 Right
                               </button>
@@ -640,7 +941,7 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
                         </>
                       )}
 
-                      {/* Image URL for Bio sections */}
+                      {/* Bio Image */}
                       {section.type === 'bio' && (
                         <div>
                           <label className="text-xs text-slate-400 uppercase block mb-1">Profile Image URL</label>
@@ -654,16 +955,7 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
                         </div>
                       )}
 
-                      {/* Smart Text Info */}
-                      {section.type === 'smarttext' && (
-                        <div className="bg-slate-950 p-3 rounded border border-slate-700">
-                          <p className="text-xs text-slate-400 mb-2">💡 Smart Text Tip:</p>
-                          <p className="text-xs text-slate-300">Use <code className="bg-slate-800 px-1 py-0.5 rounded">[Text|#color]</code> to highlight words!</p>
-                          <p className="text-xs text-slate-500 mt-1">Example: Get it [FREE|#00ff00] today!</p>
-                        </div>
-                      )}
-
-                      {/* Section Content Fields */}
+                      {/* Content Fields */}
                       {Object.entries(section.content).filter(([key]) => 
                         !['imageUrl', 'showImage', 'imagePosition'].includes(key)
                       ).map(([key, value]) => (
