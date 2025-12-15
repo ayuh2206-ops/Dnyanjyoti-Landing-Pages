@@ -120,12 +120,34 @@ const SmartTextSection = ({ section, theme }) => {
     xlarge: 'text-5xl md:text-7xl'
   };
 
-  const width = section.width || 'default';
-  const widthClasses = {
-    narrow: 'max-w-2xl',
-    default: 'max-w-4xl',
-    wide: 'max-w-6xl',
-    full: 'max-w-7xl'
+  // Dynamic positioning and sizing
+  const position = section.position || { x: 'center', y: 'center' };
+  const boxWidth = section.boxWidth || '800px';
+  const boxHeight = section.boxHeight || 'auto';
+  const textAlign = section.textAlign || 'left';
+  const padding = section.padding || '40px';
+
+  const getPositionStyles = () => {
+    const styles = {
+      width: boxWidth,
+      height: boxHeight,
+      padding: padding,
+      textAlign: textAlign
+    };
+
+    // Horizontal positioning
+    if (position.x === 'left') {
+      styles.marginLeft = '0';
+      styles.marginRight = 'auto';
+    } else if (position.x === 'right') {
+      styles.marginLeft = 'auto';
+      styles.marginRight = '0';
+    } else {
+      styles.marginLeft = 'auto';
+      styles.marginRight = 'auto';
+    }
+
+    return styles;
   };
 
   return (
@@ -136,10 +158,19 @@ const SmartTextSection = ({ section, theme }) => {
         ...getEffectStyle(section.effect, section.effectConfig)
       }}
     >
-      <div className={`${widthClasses[width]} mx-auto`}>
-        <h2 className={`${titleSizeClasses[fontSize]} font-bold text-center mb-6`} style={{ color: theme.secondary }}>
-          {section.content.title || 'Smart Text Title'}
-        </h2>
+      <div 
+        className="smart-text-box"
+        style={{
+          ...getPositionStyles(),
+          backgroundColor: section.boxBgColor || 'transparent',
+          borderRadius: section.boxRadius || '0px'
+        }}
+      >
+        {section.content.title && (
+          <h2 className={`${titleSizeClasses[fontSize]} font-bold mb-6`} style={{ color: theme.secondary }}>
+            {section.content.title}
+          </h2>
+        )}
         <div className={`${fontSizeClasses[fontSize]} text-slate-700 leading-relaxed space-y-4`}>
           {(section.content.paragraphs || ['Add your text here...']).map((para, i) => (
             <p key={i}>
@@ -528,7 +559,13 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
       wordEffect: null,
       wordEffectConfig: {},
       fontSize: 'default',
-      width: 'default',
+      position: { x: 'center', y: 'center' },
+      boxWidth: '800px',
+      boxHeight: 'auto',
+      boxBgColor: 'transparent',
+      boxRadius: '0px',
+      textAlign: 'left',
+      padding: '40px',
       content: { title: 'Smart Text', paragraphs: ['Use [highlighted text|#FF6B00] to add colors!'] } 
     },
     content: { 
@@ -761,22 +798,124 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
                         </select>
                       </div>
 
-                      {/* Width (Smart Text only) */}
+                      {/* Smart Text Box Controls */}
                       {section.type === 'smarttext' && (
-                        <div>
-                          <label className="text-xs text-slate-400 uppercase block mb-1">Section Width</label>
-                          <select 
-                            value={section.width || 'default'} 
-                            onChange={(e) => updateSection(section.id, 'width', e.target.value)}
-                            className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600"
-                          >
-                            <option value="narrow">Narrow</option>
-                            <option value="default">Default</option>
-                            <option value="wide">Wide</option>
-                            <option value="full">Full Width</option>
-                          </select>
-                        </div>
+                        <>
+                          {/* Box Position */}
+                          <div>
+                            <label className="text-xs text-slate-400 uppercase block mb-2">Box Position (Horizontal)</label>
+                            <div className="grid grid-cols-3 gap-2">
+                              {['left', 'center', 'right'].map(pos => (
+                                <button
+                                  key={pos}
+                                  onClick={() => updateSection(section.id, 'position', { ...section.position, x: pos })}
+                                  className={`py-2 px-3 text-xs rounded font-bold capitalize ${(section.position?.x || 'center') === pos ? 'bg-orange-500 text-white' : 'bg-slate-950 text-slate-400'}`}
+                                >
+                                  {pos}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Box Width */}
+                          <div>
+                            <label className="text-xs text-slate-400 uppercase block mb-1">Box Width</label>
+                            <input 
+                              type="text" 
+                              value={section.boxWidth || '800px'} 
+                              onChange={(e) => updateSection(section.id, 'boxWidth', e.target.value)} 
+                              placeholder="e.g., 800px, 50%, 100%"
+                              className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600" 
+                            />
+                            <p className="text-xs text-slate-500 mt-1">Use px, %, or vw (e.g., 600px, 80%, 50vw)</p>
+                          </div>
+
+                          {/* Box Height */}
+                          <div>
+                            <label className="text-xs text-slate-400 uppercase block mb-1">Box Height</label>
+                            <input 
+                              type="text" 
+                              value={section.boxHeight || 'auto'} 
+                              onChange={(e) => updateSection(section.id, 'boxHeight', e.target.value)} 
+                              placeholder="e.g., auto, 400px, 50vh"
+                              className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600" 
+                            />
+                            <p className="text-xs text-slate-500 mt-1">Use auto, px, or vh (e.g., auto, 300px, 40vh)</p>
+                          </div>
+
+                          {/* Box Background Color */}
+                          <div>
+                            <label className="text-xs text-slate-400 uppercase block mb-1">Box Background</label>
+                            <div className="flex gap-2">
+                              <input 
+                                type="color" 
+                                value={section.boxBgColor === 'transparent' ? '#FFFFFF' : section.boxBgColor || '#FFFFFF'} 
+                                onChange={(e) => updateSection(section.id, 'boxBgColor', e.target.value)} 
+                                className="w-12 h-10 rounded cursor-pointer" 
+                              />
+                              <input 
+                                type="text" 
+                                value={section.boxBgColor || 'transparent'} 
+                                onChange={(e) => updateSection(section.id, 'boxBgColor', e.target.value)} 
+                                placeholder="transparent or #color"
+                                className="flex-1 bg-slate-950 p-2 text-xs rounded border border-slate-600 font-mono" 
+                              />
+                            </div>
+                          </div>
+
+                          {/* Box Border Radius */}
+                          <div>
+                            <label className="text-xs text-slate-400 uppercase block mb-1">Box Border Radius</label>
+                            <input 
+                              type="text" 
+                              value={section.boxRadius || '0px'} 
+                              onChange={(e) => updateSection(section.id, 'boxRadius', e.target.value)} 
+                              placeholder="e.g., 0px, 12px, 24px"
+                              className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600" 
+                            />
+                          </div>
+
+                          {/* Box Padding */}
+                          <div>
+                            <label className="text-xs text-slate-400 uppercase block mb-1">Box Padding</label>
+                            <input 
+                              type="text" 
+                              value={section.padding || '40px'} 
+                              onChange={(e) => updateSection(section.id, 'padding', e.target.value)} 
+                              placeholder="e.g., 20px, 40px, 60px"
+                              className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-600" 
+                            />
+                          </div>
+
+                          {/* Text Alignment */}
+                          <div>
+                            <label className="text-xs text-slate-400 uppercase block mb-2">Text Alignment</label>
+                            <div className="grid grid-cols-3 gap-2">
+                              {['left', 'center', 'right'].map(align => (
+                                <button
+                                  key={align}
+                                  onClick={() => updateSection(section.id, 'textAlign', align)}
+                                  className={`py-2 px-3 text-xs rounded font-bold capitalize ${(section.textAlign || 'left') === align ? 'bg-orange-500 text-white' : 'bg-slate-950 text-slate-400'}`}
+                                >
+                                  {align}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="bg-blue-950/30 border border-blue-700/50 p-3 rounded">
+                            <p className="text-xs text-blue-300 font-bold mb-1">💡 Dynamic Box Tips:</p>
+                            <ul className="text-xs text-blue-200 space-y-1">
+                              <li>• Width: Try 600px, 80%, or 50vw</li>
+                              <li>• Height: Use auto or fixed like 400px</li>
+                              <li>• Position the box left, center, or right</li>
+                              <li>• Add background color and rounded corners</li>
+                            </ul>
+                          </div>
+                        </>
                       )}
+
+                      {/* Width (Smart Text only) - REMOVED, replaced with box controls above */}
 
                       {/* Section Visual Effect */}
                       <div>
