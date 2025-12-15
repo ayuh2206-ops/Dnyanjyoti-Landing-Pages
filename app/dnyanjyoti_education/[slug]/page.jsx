@@ -661,7 +661,7 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
         {activeTab === 'sections' && (
           <>
             <div className="mb-4">
