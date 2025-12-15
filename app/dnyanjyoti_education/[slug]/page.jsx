@@ -463,7 +463,7 @@ const AdminWorkspace = ({ page, onUpdate, onClose }) => {
             ))}
             <div>
               <label className="text-xs text-slate-400 uppercase mb-2 block">Border Radius</label>
-              <select <select value={page.theme.radius} onChange={(e) => updateTheme('radius', e.target.value)} className="w-full bg-slate-800 p-3 text-sm rounded">
+              <select value={page.theme.radius} onChange={(e) => updateTheme('radius', e.target.value)} className="w-full bg-slate-800 p-3 text-sm rounded">
                 <option value="rounded-none">Square</option>
                 <option value="rounded">Small</option>
                 <option value="rounded-lg">Medium</option>
