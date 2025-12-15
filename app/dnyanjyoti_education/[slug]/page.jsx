@@ -2,10 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  CheckCircle, MessageCircle, Send, ChevronRight, Download, Star, 
-  Layout, Eye, X, Edit3, Plus, Trash2, Search, Link as LinkIcon,
-  Type as TypeIcon, Square, Circle, MousePointer, AlertTriangle, RotateCcw,
-  Palette, Instagram, Facebook, FileText, Lock, Sparkles, Zap
+  ChevronRight, Download, Star, X, Edit3, Plus, Trash2, RotateCcw,
+  Sparkles, Zap, Instagram, Send, MessageCircle, Facebook, Link2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
@@ -27,12 +25,12 @@ const EFFECTS = {
 };
 
 const THEMES = {
-  royal: { primary: '#FF6B00', secondary: '#001124', bg: '#F8FAFC', font: 'font-serif', radius: 'rounded-xl' },
-  classic_navy: { primary: '#FF6B00', secondary: '#003366', bg: '#FFFFFF', font: 'font-sans', radius: 'rounded-lg' },
-  ocean: { primary: '#0EA5E9', secondary: '#0F172A', bg: '#F0F9FF', font: 'font-sans', radius: 'rounded-lg' },
-  forest: { primary: '#22C55E', secondary: '#064E3B', bg: '#F0FDF4', font: 'font-sans', radius: 'rounded-2xl' },
-  crimson: { primary: '#E11D48', secondary: '#18181B', bg: '#FFF1F2', font: 'font-mono', radius: 'rounded-none' },
-  luxury: { primary: '#D4AF37', secondary: '#000000', bg: '#1a1a1a', font: 'font-serif', radius: 'rounded-sm' }
+  royal: { primary: '#FF6B00', secondary: '#001124', accent: '#FFA500', bg: '#F8FAFC', textPrimary: '#1E293B', textSecondary: '#64748B', font: 'font-serif', radius: 'rounded-xl' },
+  classic_navy: { primary: '#FF6B00', secondary: '#003366', accent: '#0066CC', bg: '#FFFFFF', textPrimary: '#1E293B', textSecondary: '#64748B', font: 'font-sans', radius: 'rounded-lg' },
+  ocean: { primary: '#0EA5E9', secondary: '#0F172A', accent: '#38BDF8', bg: '#F0F9FF', textPrimary: '#0C4A6E', textSecondary: '#0369A1', font: 'font-sans', radius: 'rounded-lg' },
+  forest: { primary: '#22C55E', secondary: '#064E3B', accent: '#4ADE80', bg: '#F0FDF4', textPrimary: '#14532D', textSecondary: '#166534', font: 'font-sans', radius: 'rounded-2xl' },
+  crimson: { primary: '#E11D48', secondary: '#18181B', accent: '#F43F5E', bg: '#FFF1F2', textPrimary: '#881337', textSecondary: '#9F1239', font: 'font-mono', radius: 'rounded-none' },
+  luxury: { primary: '#D4AF37', secondary: '#000000', accent: '#FFD700', bg: '#1a1a1a', textPrimary: '#FFFFFF', textSecondary: '#D4AF37', font: 'font-serif', radius: 'rounded-sm' }
 };
 
 const MPSC_IMPORT_DATA = {
@@ -49,21 +47,18 @@ const MPSC_IMPORT_DATA = {
     message: "Join the Inner Circle to get your Free Material.",
     whatsappLink: "https://whatsapp.com",
     telegramLink: "https://t.me",
+    instagramLink: "https://instagram.com",
+    facebookLink: "https://facebook.com",
+    customLink: "",
+    customLinkText: "Visit Website",
     showSocials: true
   },
   sections: [
     { id: 'hero_imported', type: 'hero', content: { tag: 'EXCLUSIVE WEBINAR', headline: 'Conquer the Fear of the New Descriptive Pattern', subheadline: "Learn the exact answer-writing strategy used by 350+ Officers.", ctaText: 'Register Now', ctaSecondary: 'Get Free Study Material', effect: 'glow' } },
-    { id: 'smart_text_demo', type: 'smart_text', content: { text: "Get the webinar worth [3999|#ff0000] for [FREE|#00cc00]!", alignment: 'center', fontSize: 'text-3xl' } },
-    { id: 'form_imported', type: 'form', content: { title: 'Secure Your Seat', subtitle: 'Register now to unlock free material.', btnText: 'Register & Unlock PDF' } }
+    { id: 'smart_text_demo', type: 'smart_text', content: { text: "Get the webinar worth [3999|#ff0000] for [FREE|#00cc00]!", alignment: 'center', fontSize: 'text-3xl', effect: 'none' } },
+    { id: 'form_imported', type: 'form', content: { title: 'Secure Your Seat', subtitle: 'Register now to unlock free material.', btnText: 'Register & Unlock PDF', effect: 'none' } }
   ]
 };
-
-const NEW_PAGE_TEMPLATE = (slug) => ({
-  id: slug, status: 'draft', theme: THEMES.royal,
-  seo: { title: "New Campaign", description: "", keywords: "" },
-  thankYou: { title: "Success!", message: "Check email.", showSocials: true },
-  sections: [{ id: `hero_${Date.now()}`, type: 'hero', content: { tag: 'NEW', headline: 'Headline', subheadline: 'Subtitle', ctaText: 'Register' } }]
-});
 
 // --- HELPER: SMART TEXT PARSER ---
 const SmartTextParser = ({ text, className }) => {
@@ -127,38 +122,6 @@ const FeaturesBlock = ({ content, theme }) => (
     </section>
 );
 
-const CustomContentBlock = ({ content, theme }) => (
-    <section className={`py-20 px-6 border-t border-slate-100 ${theme.font}`} style={{ backgroundColor: content.customBgColor || 'white' }}>
-      <div className={`max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-12 ${EFFECTS[content.effect] || ''}`}>
-        <div className={`flex-1 ${content.imagePosition === 'right' ? 'order-1' : 'order-2 md:order-1'}`}>
-          <h2 className="text-3xl font-bold mb-6" style={{ color: content.customTextColor || theme.secondary }}>{content.title}</h2>
-          <p className="text-slate-600 text-lg leading-relaxed mb-6 whitespace-pre-wrap">{content.body}</p>
-          {content.btnText && <a href={content.btnLink || "#"} className="inline-flex items-center gap-2 font-bold hover:underline" style={{ color: theme.primary }}>{content.btnText} <ChevronRight size={18}/></a>}
-        </div>
-        {content.imageUrl && (
-          <div className={`flex-1 w-full ${content.imagePosition === 'right' ? 'order-2' : 'order-1 md:order-2'}`}>
-            <img src={content.imageUrl} alt="Section" className={`w-full shadow-xl ${theme.radius}`} />
-          </div>
-        )}
-      </div>
-    </section>
-);
-
-const BioBlock = ({ content, theme }) => (
-    <section className={`py-20 px-6 bg-slate-50 ${theme.font}`}>
-      <div className={`max-w-4xl mx-auto bg-white p-8 shadow-lg border border-slate-100 flex flex-col md:flex-row items-center gap-8 ${theme.radius} ${EFFECTS[content.effect] || ''}`}>
-        <div className={`w-32 h-32 md:w-48 md:h-48 overflow-hidden border-4 flex-shrink-0 ${theme.radius === 'rounded-none' ? 'rounded-none' : 'rounded-full'}`} style={{ borderColor: theme.secondary }}>
-           <img src={content.imageUrl || "https://via.placeholder.com/300"} alt="Profile" className="w-full h-full object-cover"/>
-        </div>
-        <div className="text-center md:text-left">
-           <h3 className="text-xl font-bold" style={{ color: theme.secondary }}>{content.name}</h3>
-           <p className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: theme.primary }}>{content.role}</p>
-           <p className="text-slate-600 italic">"{content.bio}"</p>
-        </div>
-      </div>
-    </section>
-);
-
 const FormBlock = ({ content, theme, onSubmit }) => (
   <section id="registration-form" className={`py-20 px-6 bg-white ${theme.font}`}>
     <div className={`max-w-lg mx-auto bg-white shadow-2xl p-8 border border-slate-100 ${theme.radius} ${EFFECTS[content.effect] || ''}`}>
@@ -172,6 +135,54 @@ const FormBlock = ({ content, theme, onSubmit }) => (
       </form>
     </div>
   </section>
+);
+
+const ThankYouPage = ({ thankYou, theme }) => (
+  <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: theme.bg }}>
+    <div className={`max-w-2xl w-full bg-white p-12 text-center shadow-2xl ${theme.radius}`}>
+      <div className={`w-20 h-20 mx-auto mb-6 flex items-center justify-center ${theme.radius}`} style={{ backgroundColor: theme.primary }}>
+        <Star size={40} className="text-white"/>
+      </div>
+      <h1 className="text-4xl font-bold mb-4" style={{ color: theme.secondary }}>{thankYou.title}</h1>
+      <p className="text-lg mb-8" style={{ color: theme.textSecondary }}>{thankYou.message}</p>
+      
+      {thankYou.showSocials && (
+        <div className="space-y-4">
+          <p className="text-sm font-bold uppercase tracking-wider mb-6" style={{ color: theme.primary }}>Connect With Us</p>
+          
+          {thankYou.whatsappLink && (
+            <a href={thankYou.whatsappLink} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-center gap-3 w-full py-4 font-bold text-lg transition-all hover:scale-105 ${theme.radius}`} style={{ backgroundColor: '#25D366', color: 'white' }}>
+              <MessageCircle size={24} /> Join WhatsApp Community
+            </a>
+          )}
+          
+          {thankYou.telegramLink && (
+            <a href={thankYou.telegramLink} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-center gap-3 w-full py-4 font-bold text-lg transition-all hover:scale-105 ${theme.radius}`} style={{ backgroundColor: '#0088cc', color: 'white' }}>
+              <Send size={24} /> Join Telegram Channel
+            </a>
+          )}
+          
+          {thankYou.instagramLink && (
+            <a href={thankYou.instagramLink} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-center gap-3 w-full py-4 font-bold text-lg transition-all hover:scale-105 ${theme.radius}`} style={{ background: 'linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)', color: 'white' }}>
+              <Instagram size={24} /> Follow on Instagram
+            </a>
+          )}
+          
+          {thankYou.facebookLink && (
+            <a href={thankYou.facebookLink} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-center gap-3 w-full py-4 font-bold text-lg transition-all hover:scale-105 ${theme.radius}`} style={{ backgroundColor: '#1877F2', color: 'white' }}>
+              <Facebook size={24} /> Like on Facebook
+            </a>
+          )}
+          
+          {thankYou.customLink && (
+            <a href={thankYou.customLink} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-center gap-3 w-full py-4 font-bold text-lg transition-all hover:scale-105 border-2 ${theme.radius}`} style={{ borderColor: theme.primary, color: theme.primary }}>
+              <Link2 size={24} /> {thankYou.customLinkText || 'Visit Website'}
+            </a>
+          )}
+        </div>
+      )}
+    </div>
+  </div>
 );
 
 export default function Page({ params }) {
@@ -251,14 +262,12 @@ export default function Page({ params }) {
               if (section.type === 'hero') return <HeroBlock key={section.id} content={section.content} theme={pageData.theme} onAction={()=>{}} />;
               if (section.type === 'smart_text') return <SmartTextBlock key={section.id} content={section.content} theme={pageData.theme} />;
               if (section.type === 'features') return <FeaturesBlock key={section.id} content={section.content} theme={pageData.theme} />;
-              if (section.type === 'content') return <CustomContentBlock key={section.id} content={section.content} theme={pageData.theme} />;
-              if (section.type === 'bio') return <BioBlock key={section.id} content={section.content} theme={pageData.theme} />;
               if (section.type === 'form') return <FormBlock key={section.id} content={section.content} theme={pageData.theme} onSubmit={handleLeadSubmit} />;
               return null;
             })}
           </main>
         )}
-        {viewState === 'thankyou' && <div className="h-screen flex items-center justify-center"><h1>{pageData.thankYou.title}</h1></div>}
+        {viewState === 'thankyou' && pageData && <ThankYouPage thankYou={pageData.thankYou} theme={pageData.theme} />}
       </div>
       <AnimatePresence>
         {isWorkspaceOpen && isAdminUnlocked && pageData && (
@@ -293,92 +302,95 @@ const AdminWorkspace = ({ page, onUpdate, onClose, onReImport }) => {
   
   const addBlock = (type) => {
     let content = {};
-    if (type === 'hero') content = { tag: 'NEW', headline: 'Header', subheadline: 'Sub', ctaText: 'Action', effect: 'none' };
-    if (type === 'smart_text') content = { text: "Highlight [Important|red] text", alignment: 'center', fontSize: 'text-2xl', effect: 'none' };
-    if (type === 'form') content = { title: 'Register', btnText: 'Submit', effect: 'none' };
+    if (type === 'hero') content = { tag: 'NEW', headline: 'Your Headline Here', subheadline: 'Compelling subtitle', ctaText: 'Get Started', ctaSecondary: '', effect: 'none' };
+    if (type === 'smart_text') content = { text: "Highlight [Important Text|#ff0000] easily", alignment: 'center', fontSize: 'text-2xl', effect: 'none' };
+    if (type === 'features') content = { title: 'FEATURES', subtitle: 'Why Choose Us', alignment: 'center', items: [], effect: 'none' };
+    if (type === 'form') content = { title: 'Register Now', subtitle: 'Fill the form below', btnText: 'Submit', effect: 'none' };
     
     const newBlock = { id: `${type}_${Date.now()}`, type: type, content };
     onUpdate({ ...page, sections: [...page.sections, newBlock] });
     setShowBlockPicker(false);
   };
-  const deleteBlock = (id) => { if(confirm("Delete?")) onUpdate({ ...page, sections: page.sections.filter(s => s.id !== id) }); };
+  
+  const deleteBlock = (id) => { if(confirm("Delete this block?")) onUpdate({ ...page, sections: page.sections.filter(s => s.id !== id) }); };
 
   return (
-    <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} className="fixed top-0 right-0 w-[420px] h-full bg-slate-900 text-white z-50 flex flex-col p-6">
-      <div className="flex justify-between mb-6"><h2 className="font-bold">Builder</h2><button onClick={onClose}><X/></button></div>
-      <div className="flex border-b border-slate-700 overflow-x-auto">
+    <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} className="fixed top-0 right-0 w-[420px] h-full bg-slate-900 text-white z-50 flex flex-col overflow-hidden">
+      <div className="flex justify-between items-center p-6 border-b border-slate-700">
+        <h2 className="font-bold text-xl">Builder</h2>
+        <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg"><X size={20}/></button>
+      </div>
+      
+      <div className="flex border-b border-slate-700">
         {['content', 'thankyou', 'theme'].map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-4 text-[10px] font-bold uppercase ${activeTab === tab ? 'text-[#FF6B00] border-b-2 border-[#FF6B00]' : 'text-slate-500'}`}>{tab}</button>
+          <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-4 text-xs font-bold uppercase transition-colors ${activeTab === tab ? 'text-[#FF6B00] border-b-2 border-[#FF6B00]' : 'text-slate-400 hover:text-white'}`}>{tab}</button>
         ))}
       </div>
-      <div className="flex-1 overflow-y-auto p-6 relative">
+      
+      <div className="flex-1 overflow-y-auto p-6">
          {activeTab === 'content' && (
             <div className="space-y-4">
-               <button onClick={() => setShowBlockPicker(true)} className="w-full py-3 bg-[#FF6B00] text-white rounded font-bold">+ Add Block</button>
-               {page.sections.map((s, i) => (
-                 <div key={s.id} className="bg-slate-800 p-3 rounded border border-slate-700">
-                    <div className="flex justify-between mb-2 cursor-pointer" onClick={() => setExpandedSection(expandedSection === s.id ? null : s.id)}>
-                       <span className="text-xs font-bold uppercase flex items-center gap-2">
-                         {s.type} 
-                         {s.content.effect && s.content.effect !== 'none' && <Sparkles size={10} className="text-yellow-400"/>}
+               <button onClick={() => setShowBlockPicker(true)} className="w-full py-3 bg-[#FF6B00] hover:bg-[#e56000] text-white rounded-lg font-bold flex items-center justify-center gap-2">
+                 <Plus size={20}/> Add Block
+               </button>
+               
+               {page.sections.map((s) => (
+                 <div key={s.id} className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
+                    <div className="flex justify-between items-center p-3 cursor-pointer hover:bg-slate-750" onClick={() => setExpandedSection(expandedSection === s.id ? null : s.id)}>
+                       <span className="text-sm font-bold uppercase flex items-center gap-2">
+                         {s.type.replace('_', ' ')} 
+                         {s.content.effect && s.content.effect !== 'none' && <Sparkles size={12} className="text-yellow-400"/>}
                        </span>
                        <div className="flex gap-2">
-                         <Edit3 size={12}/>
-                         <button onClick={(e) => { e.stopPropagation(); deleteBlock(s.id); }}><Trash2 size={12} className="text-red-500"/></button>
+                         <Edit3 size={14} className="text-blue-400"/>
+                         <button onClick={(e) => { e.stopPropagation(); deleteBlock(s.id); }}><Trash2 size={14} className="text-red-400"/></button>
                        </div>
                     </div>
+                    
                     {expandedSection === s.id && (
-                      <div className="space-y-2 mt-2 pt-2 border-t border-slate-700">
-                        {/* Effect Selector */}
+                      <div className="p-4 space-y-3 border-t border-slate-700 bg-slate-900">
                         <div>
-                           <label className="text-[10px] text-blue-400 uppercase font-bold flex items-center gap-1"><Zap size={10}/> Visual Effect</label>
-                           <select value={s.content.effect || 'none'} onChange={(e) => updateContent(s.id, 'effect', e.target.value)} className="w-full bg-slate-950 text-xs border border-slate-600 rounded p-1">
+                           <label className="text-xs text-blue-400 uppercase font-bold flex items-center gap-1 mb-1"><Zap size={12}/> Effect</label>
+                           <select value={s.content.effect || 'none'} onChange={(e) => updateContent(s.id, 'effect', e.target.value)} className="w-full bg-slate-950 text-sm border border-slate-600 rounded p-2 text-white">
                               <option value="none">None</option>
-                              <option value="pulse">Pulse (Subtle)</option>
-                              <option value="bounce">Bounce (Attention)</option>
-                              <option value="glow">Glow (Highlight)</option>
-                              <option value="shake">Shake (Urgent)</option>
+                              <option value="pulse">Pulse</option>
+                              <option value="bounce">Bounce</option>
+                              <option value="glow">Glow</option>
+                              <option value="shake">Shake</option>
                            </select>
                         </div>
-                        {Object.keys(s.content).map(k => {
-                           if(typeof s.content[k] !== 'string' || k === 'effect') return null;
-                           return (
-                             <div key={k}>
-                               <label className="text-[10px] text-slate-500 uppercase">{k}</label>
-                               <input value={s.content[k]} onChange={e => updateContent(s.id, k, e.target.value)} className="w-full bg-slate-950 p-1 mb-1 text-xs rounded border border-slate-700" placeholder={k} />
-                               {k === 'text' && s.type === 'smart_text' && <p className="text-[9px] text-slate-500">Use [Text|Color] for highlighting. Ex: [Free|red]</p>}
-                             </div>
-                           )
-                        })}
+                        
+                        {Object.keys(s.content).filter(k => typeof s.content[k] === 'string' && k !== 'effect').map(k => (
+                          <div key={k}>
+                            <label className="text-xs text-slate-400 uppercase mb-1 block">{k.replace(/([A-Z])/g, ' $1').trim()}</label>
+                            {k === 'text' && s.type === 'smart_text' ? (
+                              <textarea value={s.content[k]} onChange={e => updateContent(s.id, k, e.target.value)} rows={3} className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-700 text-white" placeholder={k} />
+                            ) : (
+                              <input value={s.content[k]} onChange={e => updateContent(s.id, k, e.target.value)} className="w-full bg-slate-950 p-2 text-sm rounded border border-slate-700 text-white" placeholder={k} />
+                            )}
+                            {k === 'text' && s.type === 'smart_text' && <p className="text-xs text-slate-500 mt-1">Use [Text|#color] - Example: [FREE|#00ff00]</p>}
+                          </div>
+                        ))}
                       </div>
                     )}
                  </div>
                ))}
             </div>
          )}
+         
          {activeTab === 'thankyou' && (
-            <div className="space-y-2">
-               {['title', 'message', 'whatsappLink'].map(k => (
-                  <input key={k} value={page.thankYou[k] || ''} onChange={e => updateThankYou(k, e.target.value)} className="w-full bg-slate-800 p-2 text-sm rounded" placeholder={k}/>
-               ))}
-            </div>
-         )}
-         {activeTab === 'theme' && (
             <div className="space-y-4">
-               <h3 className="text-xs font-bold uppercase text-slate-500">Colors</h3>
-               <input type="color" value={page.theme.primary} onChange={e => updateTheme('primary', e.target.value)} className="w-full h-10"/>
-               <button onClick={onReImport} className="w-full py-3 mt-4 bg-red-900/20 text-red-500 text-xs font-bold border border-red-900/50 rounded flex items-center justify-center gap-2"><RotateCcw size={14}/> Reset to Legacy Data</button>
-            </div>
-         )}
-      </div>
-      {showBlockPicker && (
-          <div className="absolute inset-0 bg-slate-900/95 backdrop-blur-sm z-50 p-6 flex flex-col">
-            <div className="flex justify-between items-center mb-6"><h3 className="font-bold text-white">Select Block</h3><button onClick={() => setShowBlockPicker(false)}><X size={20}/></button></div>
-            <div className="grid grid-cols-1 gap-3 overflow-y-auto">
-               {['hero', 'smart_text', 'content', 'features', 'bio', 'form'].map(type => (<button key={type} onClick={() => addBlock(type)} className="p-4 bg-slate-800 border border-slate-700 rounded-xl text-left capitalize font-bold hover:bg-slate-700">{type.replace('_', ' ')}</button>))}
-            </div>
-          </div>
-      )}
-    </motion.div>
-  );
-};
+              <h3 className="text-sm font-bold text-slate-400 uppercase mb-4">Thank You Page</h3>
+              
+              <div>
+                <label className="text-xs text-slate-400 uppercase mb-1 block">Title</label>
+                <input value={page.thankYou.title || ''} onChange={e => updateThankYou('title', e.target.value)} className="w-full bg-slate-800 p-2 text-sm rounded border border-slate-700 text-white"/>
+              </div>
+              
+              <div>
+                <label className="text-xs text-slate-400 uppercase mb-1 block">Message</label>
+                <textarea value={page.thankYou.message || ''} onChange={e => updateThankYou('message', e.target.value)} rows={3} className="w-full bg-slate-800 p-2 text-sm rounded border border-slate-700 text-white"/>
+              </div>
+              
+              <div className="pt-4 border-t border-slate-700">
+                <h4 className="text-xs font-bold text-blue-400 uppercase mb-3">Social Links</h4>
